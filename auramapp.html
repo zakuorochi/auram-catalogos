@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURAM - Asesor de Imagen Empático</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@0.21.0/dist/index.min.js"></script>
+    
+    <style>
+        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Helvetica', sans-serif; height: 100%; overflow: hidden; }
+        #splash { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 3rem; letter-spacing: 12px; transition: 1s; }
+        #main-app { display: none; height: 100vh; flex-direction: column; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .ui { position: absolute; bottom: 40px; width: 100%; text-align: center; z-index: 10; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; padding: 25px; text-align: center; box-sizing: border-box; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 400px; }
+        button { background: #111; color: #fff; border: 1px solid #333; padding: 15px; border-radius: 30px; cursor: pointer; font-size: 1rem; }
+        .btn-magic { width: 85px; height: 85px; border-radius: 50%; font-size: 2.2rem; background: #fff; color: #000; border: none; box-shadow: 0 0 20px rgba(255,255,255,0.4); }
+        .loader { border: 3px solid #333; border-top: 3px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #res-body { max-width: 550px; text-align: left; line-height: 1.7; color: #ddd; font-size: 1.1rem; }
+        .precio { color: #00d1ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="splash">AURAM</div>
+
+    <div id="main-app">
+        <video id="webcam" autoplay playsinline></video>
+        
+        <div class="ui">
+            <button class="btn-magic" onclick="document.getElementById('modal-occasions').style.display='flex'">✨</button>
+        </div>
+
+        <div id="modal-occasions" class="overlay">
+            <h3>¿Para qué ocasión deseas impactar hoy?</h3>
+            <div class="grid">
+                <button onclick="startAURAM('Boda')">Boda</button>
+                <button onclick="startAURAM('Fiesta')">Fiesta</button>
+                <button onclick="startAURAM('Cita')">Cita</button>
+                <button onclick="startAURAM('Casual')">Casual</button>
+            </div>
+            <button onclick="this.parentElement.style.display='none'" style="background:transparent; color:#666; margin-top:15px;">Cerrar</button>
+        </div>
+
+        <div id="modal-loading" class="overlay">
+            <div class="loader"></div>
+            <p id="loading-text">Analizando tu estilo...</p>
+        </div>
+
+        <div id="modal-result" class="overlay">
+            <h2 id="res-title" style="color: #00d1ff;"></h2>
+            <div id="res-body"></div>
+            <button onclick="location.reload()" style="margin-top:25px; background:#fff; color:#000; padding: 10px 20px; border-radius: 5px; font-weight: bold;">NUEVO ANÁLISIS</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURACIÓN ---
+        // 🚨 REEMPLAZA ESTO CON TU API KEY VIGENTE DE GOOGLE AI STUDIO
+        const API_KEY = "PEGA_AQUÍ_TU_API_KEY_AQUI"; 
+        
+        const GITHUB_PDFS = {
+            MUJER: "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/mujer.pdf",
+            HOMBRE: "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/hombre.pdf"
+        };
+
+        let genAIModel = null;
+        const video = document.getElementById('webcam');
+
+        // --- 2. INICIALIZACIÓN ---
+        window.onload = () => {
+            console.log("Iniciando componentes...");
+            
+            // Damos tiempo a la librería para cargar
+            setTimeout(() => {
+                const lib = window.googleGenerativeAi;
+                if (lib) {
+                    try {
+                        const genAI = new lib.GoogleGenerativeAI(API_KEY);
+                        // Usamos Gemini 1.5 Flash para máxima velocidad en la web
+                        genAIModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+                        console.log("✅ AURAM: Motor de IA encendido.");
+                    } catch (e) { 
+                        console.error("Error al configurar el modelo:", e); 
+                    }
+                } else {
+                    console.error("❌ Error: No se detectó la librería googleGenerativeAi.");
+                }
+            }, 2000);
+
+            // Iniciar cámara y pasar del Splash
+            setTimeout(() => {
+                document.getElementById('splash').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => { video.srcObject = stream; })
+                    .catch(err => { alert("Error: Por favor permite el acceso a la cámara."); });
+            }, 3000);
+        };
+
+        async function fetchPdfAsBase64(url) {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // --- 3. LÓGICA DE PROCESAMIENTO CON EL PROMPT EMPÁTICO INTEGRADO ---
+        window.startAURAM = async (ocasion) => {
+            if (!genAIModel) {
+                alert("La IA aún está cargando. Espera un segundo.");
+                return;
+            }
+
+            document.getElementById('modal-occasions').style.display = 'none';
+            document.getElementById('modal-loading').style.display = 'flex';
+
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const imgBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+                // Paso 1: Detección Silenciosa de Género
+                const resultG = await genAIModel.generateContent([
+                    { inlineData: { data: imgBase64, mimeType: "image/jpeg" } },
+                    { text: "¿Es HOMBRE o MUJER? Responde solo una palabra." }
+                ]);
+                const perfil = resultG.response.text().trim().toUpperCase().replace(/[^A-Z]/g, '');
+                
+                // Paso 2: Cargar PDF de GitHub
+                document.getElementById('loading-text').innerText = `Consultando catálogo de ${perfil}...`;
+                const pdfBase64 = await fetchPdfAsBase64(GITHUB_PDFS[perfil] || GITHUB_PDFS.MUJER);
+
+                // Paso 3: Recomendación Final (Prompt Súper-Empático Integrado)
+                // 🚨 AQUÍ ESTÁ EL PROMPT QUE CREAMOS
+                const PROMPT_EMPATICO = `Eres AURAM, un asistente de moda empático de IA-Blocks. Tu misión es ser un asesor de imagen amigable, como un amigo de confianza. Tu prioridad es elevar el autoestima del usuario.
+
+INSTRUCCIONES DE ANÁLISIS SILENCIOSO (CRÍTICO):
+1. Analiza la foto del usuario de forma integral, SIN MENCIONAR NUNCA DIRECTAMENTE sus características físicas específicas (como "color de piel", "estatura", "contextura" o "peinado").
+2. Usa tu análisis de visión para determinar silenciosamente la colorimetría, proporción corporal y estilo de peinado para recomendar cortes y colores de ropa que equilibren y estilicen la figura de forma natural.
+3. Busca una prenda en el catálogo PDF adjunto que se ajuste a la ocasión solicitada y que *científicamente* mejor se adapte a tu análisis silencioso.
+4. MENCIONA el nombre de la prenda del catálogo, su precio en S/. y EXPLICA POR QUÉ esa prenda le favorece basándote en tu análisis silencioso de estilo (ej: "Este tono de verde resaltará tu mirada de una forma increíble").
+
+Contexto de la solicitud: El usuario va a una ${ocasion}.`;
+
+                const resultF = await genAIModel.generateContent([
+                    { inlineData: { data: imgBase64, mimeType: "image/jpeg" } },
+                    { inlineData: { data: pdfBase64, mimeType: "application/pdf" } },
+                    { text: PROMPT_EMPATICO }
+                ]);
+
+                // Mostrar resultados
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-title').innerText = `PERFIL: ${perfil}`;
+                
+                // Formatear precios
+                const textoFinal = resultF.response.text().replace(/(S\/\.\s?\d+)/g, '<span class="precio">$1</span>');
+                document.getElementById('res-body').innerHTML = textoFinal;
+
+            } catch (err) {
+                console.error("Error detallado:", err);
+                alert("Error de Google AI: Revisa que tu API KEY sea válida en AI Studio.");
+                document.getElementById('modal-loading').style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
