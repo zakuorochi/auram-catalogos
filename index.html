@@ -62,3 +62,122 @@
             <button onclick="location.reload()" style="background:none; border: 1px solid #444; color:#888; padding: 10px 20px; border-radius: 5px; margin-top: 20px; cursor:pointer;">Volver a empezar</button>
         </div>
     </div>
+
+    <script>
+        // --- CONFIGURACIÓN DE IA-BLOCKS ---
+        const API_KEY = "AIzaSyBFPxyUWdE4Wp2h_khmFUJdmORapkGHKBQ"; // 🚨 Tu API Key actual
+        const CATALOGOS_BASE_URL = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/";
+        const PDF_URLS = {
+            MUJER: "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/mujer.pdf",
+            HOMBRE: "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/hombre.pdf"
+        };
+
+        let genAIModel = null;
+        const video = document.getElementById('webcam');
+
+        // Inicialización
+        window.onload = async () => {
+            setTimeout(() => {
+                const lib = window.googleGenerativeAi;
+                if (lib) {
+                    const genAI = new lib.GoogleGenerativeAI(API_KEY);
+                    genAIModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                }
+                
+                document.getElementById('splash').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('splash').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'flex';
+                    initCamera();
+                }, 1000);
+            }, 2500);
+        };
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (e) {
+                alert("AURAM necesita acceso a la cámara para funcionar.");
+            }
+        }
+
+        function openOccasions() {
+            document.getElementById('modal-occasions').style.display = 'flex';
+        }
+
+        async function fetchAsBase64(url) {
+            const r = await fetch(url);
+            const b = await r.blob();
+            return new Promise(res => {
+                const fr = new FileReader();
+                fr.onloadend = () => res(fr.result.split(',')[1]);
+                fr.readAsDataURL(b);
+            });
+        }
+
+        async function processAURAM(ocasion) {
+            document.getElementById('modal-occasions').style.display = 'none';
+            document.getElementById('modal-loading').style.display = 'flex';
+
+            try {
+                // 1. Capturar imagen
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const imgB64 = canvas.toDataURL('image/jpeg').split(',')[1];
+
+                // 2. Detectar Género
+                const detG = await genAIModel.generateContent([
+                    { inlineData: { data: imgB64, mimeType: "image/jpeg" } },
+                    "¿Es HOMBRE o MUJER? Responde solo una palabra."
+                ]);
+                const perfil = detG.response.text().trim().toUpperCase().includes("HOMBRE") ? "HOMBRE" : "MUJER";
+
+                // 3. Cargar PDF
+                document.getElementById('loading-text').innerText = `CONSULTANDO CATÁLOGO ${perfil}...`;
+                const pdfB64 = await fetchAsBase64(PDF_URLS[perfil]);
+
+                // 4. Prompt Empático con Lógica de Página
+                const SYSTEM_PROMPT = `Eres AURAM, asesor de imagen empático para IA-Blocks. 
+                Analiza la foto y el PDF. Recomienda una prenda específica del catálogo para ${ocasion}.
+                NO menciones directamente rasgos físicos (estatura, peso, piel), usa un lenguaje de estilo.
+                IMPORTANTE: Indica el NÚMERO DE PÁGINA exacto del PDF donde está la prenda.
+                
+                Formato:
+                - Saludo cálido.
+                - Prenda y Precio (S/.).
+                - Por qué le queda genial (beneficio de estilo).
+                - El texto: "Página: [Número]"
+                - La palabra: "FOTO"`;
+
+                const finalRes = await genAIModel.generateContent([
+                    { inlineData: { data: imgB64, mimeType: "image/jpeg" } },
+                    { inlineData: { data: pdfB64, mimeType: "application/pdf" } },
+                    { text: SYSTEM_PROMPT }
+                ]);
+
+                let resText = finalRes.response.text();
+                
+                // 5. Lógica del Botón de Foto
+                const pageMatch = resText.match(/Página:?\s*(\d+)/i);
+                if (pageMatch) {
+                    const n = pageMatch[1];
+                    const folder = perfil.toLowerCase();
+                    const imgUrl = `${CATALOGOS_BASE_URL}${folder}/pagina_${n}.jpg`;
+                    
+                    resText = resText.replace(/FOTO/g, `<br><br><a href="${imgUrl}" target="_blank" class="btn-foto">📸 VER EN EL CATÁLOGO</a>`);
+                }
+
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = resText.replace(/(S\/\.\s?\d+)/g, '<span class="precio">$1</span>');
+
+            } catch (err) {
+                alert("Error de conexión. Revisa tu señal e intenta de nuevo.");
+                document.getElementById('modal-loading').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
