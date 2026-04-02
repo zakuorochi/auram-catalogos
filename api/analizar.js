@@ -1,3 +1,4 @@
+// api/analizar.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Solo POST' });
 
@@ -5,7 +6,6 @@ export default async function handler(req, res) {
     const { image, ocasion } = JSON.parse(req.body);
     const API_KEY = process.env.GEMINI_API_KEY;
 
-    // EL NOMBRE QUE ENCONTRAMOS MANUALMENTE
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
@@ -23,9 +23,12 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Si Google nos dice qué falló, lo enviamos para leerlo en pantalla
+    // 🚨 REVISIÓN DE ERRORES DE CUOTA O SEGURIDAD
     if (data.error) {
-        return res.status(200).json({ error: data.error.message });
+        let mensaje = data.error.message;
+        if (data.error.code === 429) mensaje = "Límite de cuota excedido. Espera un minuto.";
+        if (data.error.code === 400) mensaje = "Error en el formato de imagen o modelo.";
+        return res.status(200).json({ error: mensaje });
     }
 
     res.status(200).json(data);
