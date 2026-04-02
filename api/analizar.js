@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     const { image, ocasion } = JSON.parse(req.body);
     const API_KEY = process.env.GEMINI_API_KEY;
 
-    // 🚀 EL NOMBRE EXACTO QUE ENCONTRAMOS EN TU LISTA:
+    // EL NOMBRE QUE ENCONTRAMOS MANUALMENTE
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
@@ -23,12 +23,13 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // Si Google nos dice qué falló, lo enviamos para leerlo en pantalla
     if (data.error) {
-        return res.status(data.error.code || 400).json(data);
+        return res.status(200).json({ error: data.error.message });
     }
 
     res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(200).json({ error: "Error de servidor: " + error.message });
   }
 }
