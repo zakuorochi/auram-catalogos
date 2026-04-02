@@ -78,7 +78,7 @@
 
             try {
                 // 🛡️ LLAMADA SEGURA AL BACKEND DE VERCEL (Sin exponer llaves)
-                const response = await fetch('/api/analizar', {
+                const response = await fetch('api/analizar', {
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
