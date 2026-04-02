@@ -4,14 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AURAM | Demo Inversores</title>
-    
-    <script>
-      // Si el usuario entra por GitHub o el dominio viejo, lo movemos al motor de Vercel
-      if (window.location.hostname !== "localhost" && !window.location.hostname.includes("vercel.app")) {
-          window.location.href = "https://auram-catalogos.vercel.app/"; // 🚨 CAMBIA ESTO POR TU URL DE VERCEL
-      }
-    </script>
-
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         #splash { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; letter-spacing: 12px; background: #000; z-index: 1000; transition: 0.8s; pointer-events: none; }
@@ -57,7 +49,10 @@
 
         async function iniciarCamara() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play();
@@ -66,6 +61,7 @@
                 };
             } catch (err) {
                 document.getElementById('splash').innerText = "ERROR DE CÁMARA";
+                console.error(err);
             }
         }
 
@@ -79,12 +75,13 @@
             document.getElementById('modal-loading').style.display = 'flex';
 
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             const base64Img = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
             try {
-                // Llamada al backend de Vercel
+                // Llamada directa a la API interna de Vercel
                 const response = await fetch('api/analizar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
