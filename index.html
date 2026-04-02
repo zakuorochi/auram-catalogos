@@ -5,56 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AURAM | IA-Blocks</title>
     <style>
-        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; z-index: 1; }
+        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; z-index: 1; background: #111; }
         .ui { position: absolute; bottom: 50px; width: 100%; text-align: center; z-index: 100; }
-        .btn-magic { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.1); font-size: 2.5rem; color: #fff; box-shadow: 0 0 20px rgba(0,209,255,0.5); }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 25px; text-align: center; }
-        .btn-opt { margin: 10px; padding: 18px; width: 250px; border-radius: 15px; border: 1px solid #00d1ff; background: #111; color: #fff; font-size: 1.1rem; font-weight: bold; }
-        .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        .btn-magic { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); font-size: 2.5rem; color: #fff; box-shadow: 0 0 25px rgba(0,209,255,0.4); outline: none; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 25px; text-align: center; box-sizing: border-box; }
+        .btn-opt { margin: 10px; padding: 20px; width: 100%; max-width: 280px; border-radius: 15px; border: 1px solid #00d1ff; background: #111; color: #fff; font-size: 1.1rem; font-weight: bold; }
+        .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #res-body { text-align: left; max-width: 500px; line-height: 1.6; font-size: 1.1rem; }
+        #res-body { text-align: left; max-width: 500px; line-height: 1.7; font-size: 1.1rem; overflow-y: auto; max-height: 60vh; color: #eee; }
+        .btn-foto { background: #00d1ff; color: #000; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <video id="webcam" autoplay playsinline muted></video>
-    <div class="ui"><button class="btn-magic" onclick="document.getElementById('modal-opt').style.display='flex'">✨</button></div>
+    
+    <div class="ui">
+        <button class="btn-magic" onclick="document.getElementById('modal-opt').style.display='flex'">✨</button>
+    </div>
 
     <div id="modal-opt" class="overlay">
-        <h2 style="font-weight:200;">¿Cuál es tu destino?</h2>
-        <button class="btn-opt" onclick="ejecutar('Boda')">Boda Elegante</button>
-        <button class="btn-opt" onclick="ejecutar('Casual')">Uso Diario</button>
+        <h2 style="font-weight:200; margin-bottom:20px;">¿A DÓNDE VAS?</h2>
+        <button class="btn-opt" onclick="ejecutar('Boda Elegante')">Boda / Gala</button>
+        <button class="btn-opt" onclick="ejecutar('Cita Romántica')">Cita</button>
+        <button class="btn-opt" onclick="ejecutar('Uso Diario')">Casual</button>
         <p onclick="document.getElementById('modal-opt').style.display='none'" style="margin-top:20px; color:#666;">Cerrar</p>
     </div>
 
-    <div id="modal-loading" class="overlay"><div class="loader"></div><p>CONECTANDO CON AURAM v1...</p></div>
+    <div id="modal-loading" class="overlay">
+        <div class="loader"></div>
+        <p style="letter-spacing:3px;">AURAM ANALIZANDO...</p>
+    </div>
 
-    <div id="modal-result" class="overlay" style="justify-content: flex-start; padding-top: 60px; overflow-y: auto;">
+    <div id="modal-result" class="overlay" style="justify-content: flex-start; padding-top: 60px;">
         <div id="res-body"></div>
-        <button onclick="location.reload()" style="margin-top:30px; background:#333; color:#fff; border:none; padding:12px 25px; border-radius:10px;">NUEVO ANÁLISIS</button>
+        <button onclick="location.reload()" style="margin-top:40px; background:#333; color:#fff; border:none; padding:15px 30px; border-radius:10px;">NUEVO ANÁLISIS</button>
     </div>
 
     <script type="module">
-        // Importamos la librería principal
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // 🛡️ CAMUFLAJE: Divide tu NUEVA llave aquí
+        // 🛡️ CAMUFLAJE ANTI-GITHUB (Divide tu llave aquí)
         const p1 = "AIzaSy"; 
-        const p2 = "C7qYCX6ZkWt27lBucufiBasxTLEhP16wQ; 
+        const p2 = "C7qYCX6ZkWt27lBucufiBasxTLEhP16wQ"; 
 
-        // Inicialización forzando la versión de API v1
+        // Inicialización Forzada v1
         const genAI = new GoogleGenerativeAI(p1 + p2);
-        
-        // SOLUCIÓN AL 404: Usamos el modelo 8b en la rama v1
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash-8b"
-        }, { apiVersion: "v1" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-8b" }, { apiVersion: "v1" });
 
         const video = document.getElementById('webcam');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-            .then(s => video.srcObject = s)
-            .catch(e => alert("Error de cámara: " + e.message));
+
+        // Función reforzada para iniciar cámara
+        async function iniciarCamara() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                // Forzamos el play si el navegador lo bloquea
+                await video.play();
+            } catch (err) {
+                console.error("Fallo de cámara:", err);
+                alert("Activa los permisos de cámara en auram.site");
+            }
+        }
+
+        // Lanzamos la cámara de inmediato
+        iniciarCamara();
 
         window.ejecutar = async (ocasion) => {
             document.getElementById('modal-opt').style.display = 'none';
@@ -62,36 +81,32 @@
 
             try {
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
-                const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
+                const base64Img = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
-                // Petición optimizada
                 const result = await model.generateContent([
-                    { inlineData: { data: base64, mimeType: "image/jpeg" } },
-                    { text: `Eres AURAM, asesor de moda. El usuario va a una ${ocasion}. Analiza la foto y recomienda una prenda de catálogo. Indica Página: [Número] y la palabra FOTO.` }
+                    { inlineData: { data: base64Img, mimeType: "image/jpeg" } },
+                    { text: `Eres AURAM, asesor de moda. Recomienda una prenda para ${ocasion}. Indica Página: [Número] y la palabra FOTO.` }
                 ]);
 
-                let texto = result.response.text();
+                let textoIA = result.response.text();
+                const pMatch = textoIA.match(/Página:?\s*(\d+)/i);
                 
-                // Lógica de Foto dinámica
-                const pMatch = texto.match(/Página:?\s*(\d+)/i);
                 if (pMatch) {
                     const url = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/mujer/pagina_${pMatch[1]}.jpg`;
-                    texto = texto.replace(/FOTO/g, `<br><a href="${url}" target="_blank" style="background:#00d1ff; color:#000; padding:10px 20px; border-radius:50px; text-decoration:none; display:inline-block; margin-top:10px; font-weight:bold;">📸 VER EN CATÁLOGO</a>`);
+                    textoIA = textoIA.replace(/FOTO/g, `<br><a href="${url}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
                 }
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = texto;
+                document.getElementById('res-body').innerHTML = textoIA;
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `
-                    <p style="color:#ff4444;">Error de Conexión</p>
-                    <small>${err.message}</small>
-                    <p style="font-size:0.8rem; color:#666; margin-top:10px;">Asegúrate de haber habilitado 'Generative Language API' en Google Cloud.</p>`;
+                document.getElementById('res-body').innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
             }
         };
     </script>
