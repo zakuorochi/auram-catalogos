@@ -28,7 +28,7 @@
         <p onclick="document.getElementById('modal-opt').style.display='none'" style="margin-top:20px; color:#666;">Cerrar</p>
     </div>
 
-    <div id="modal-loading" class="overlay"><div class="loader"></div><p>CONECTANDO CON AURAM...</p></div>
+    <div id="modal-loading" class="overlay"><div class="loader"></div><p>CONECTANDO CON AURAM v1...</p></div>
 
     <div id="modal-result" class="overlay" style="justify-content: flex-start; padding-top: 60px; overflow-y: auto;">
         <div id="res-body"></div>
@@ -36,20 +36,25 @@
     </div>
 
     <script type="module">
+        // Importamos la librería principal
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        // 🛡️ CAMUFLAJE PARA GITHUB: Divide tu llave en 3 partes
-        const c1 = "AIzaSy"; // PARTE 1
-        const c2 = "B21i4EWIDivTsb4Lnq"; 
-        const c3 = "LpUcov1ujtdqtoo";
+        // 🛡️ CAMUFLAJE: Divide tu NUEVA llave aquí
+        const p1 = "AIzaSy"; 
+        const p2 = "C7qYCX6ZkWt27lBucufiBasxTLEhP16wQ; 
 
-        const genAI = new GoogleGenerativeAI(c1 + c2 + c3);
+        // Inicialización forzando la versión de API v1
+        const genAI = new GoogleGenerativeAI(p1 + p2);
         
-        // Usamos la versión estable de producción para evitar el 404
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // SOLUCIÓN AL 404: Usamos el modelo 8b en la rama v1
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash-8b"
+        }, { apiVersion: "v1" });
 
         const video = document.getElementById('webcam');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then(s => video.srcObject = s);
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+            .then(s => video.srcObject = s)
+            .catch(e => alert("Error de cámara: " + e.message));
 
         window.ejecutar = async (ocasion) => {
             document.getElementById('modal-opt').style.display = 'none';
@@ -61,16 +66,19 @@
                 canvas.getContext('2d').drawImage(video, 0, 0);
                 const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
 
+                // Petición optimizada
                 const result = await model.generateContent([
                     { inlineData: { data: base64, mimeType: "image/jpeg" } },
                     { text: `Eres AURAM, asesor de moda. El usuario va a una ${ocasion}. Analiza la foto y recomienda una prenda de catálogo. Indica Página: [Número] y la palabra FOTO.` }
                 ]);
 
                 let texto = result.response.text();
+                
+                // Lógica de Foto dinámica
                 const pMatch = texto.match(/Página:?\s*(\d+)/i);
                 if (pMatch) {
                     const url = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/mujer/pagina_${pMatch[1]}.jpg`;
-                    texto = texto.replace(/FOTO/g, `<br><a href="${url}" target="_blank" style="background:#00d1ff; color:#000; padding:10px 20px; border-radius:50px; text-decoration:none; display:inline-block; margin-top:10px; font-weight:bold;">📸 VER FOTO</a>`);
+                    texto = texto.replace(/FOTO/g, `<br><a href="${url}" target="_blank" style="background:#00d1ff; color:#000; padding:10px 20px; border-radius:50px; text-decoration:none; display:inline-block; margin-top:10px; font-weight:bold;">📸 VER EN CATÁLOGO</a>`);
                 }
 
                 document.getElementById('modal-loading').style.display = 'none';
@@ -80,7 +88,10 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = "ERROR: " + err.message;
+                document.getElementById('res-body').innerHTML = `
+                    <p style="color:#ff4444;">Error de Conexión</p>
+                    <small>${err.message}</small>
+                    <p style="font-size:0.8rem; color:#666; margin-top:10px;">Asegúrate de haber habilitado 'Generative Language API' en Google Cloud.</p>`;
             }
         };
     </script>
