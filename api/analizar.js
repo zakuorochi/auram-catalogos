@@ -5,8 +5,8 @@ export default async function handler(req, res) {
     const { image, ocasion } = JSON.parse(req.body);
     const API_KEY = process.env.GEMINI_API_KEY;
 
-    // 🚀 CAMBIO CRÍTICO: Usamos la v1 estable y el modelo con nombre completo
-  const url = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=' + API_KEY;
+    // 🚀 EL NOMBRE EXACTO QUE ENCONTRAMOS EN TU LISTA:
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -22,8 +22,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    
-    // Si Google nos da error, lo pasamos para ver qué dice
+
     if (data.error) {
         return res.status(data.error.code || 400).json(data);
     }
