@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AURAM | Demo Inversores</title>
+    
+    <script>
+      // Si el usuario entra por GitHub o el dominio viejo, lo movemos al motor de Vercel
+      if (window.location.hostname !== "localhost" && !window.location.hostname.includes("vercel.app")) {
+          window.location.href = "https://TU-PROYECTO.vercel.app"; // 🚨 CAMBIA ESTO POR TU URL DE VERCEL
+      }
+    </script>
+
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         #splash { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; letter-spacing: 12px; background: #000; z-index: 1000; transition: 0.8s; pointer-events: none; }
@@ -45,15 +53,8 @@
     </div>
 
     <script>
-  if (window.location.hostname === "zakuorochi.github.io" || window.location.hostname === "auram.site") {
-      window.location.href = "https://tu-proyecto.vercel.app"; 
-  }
-</script>
-    
-    <script>
         const video = document.getElementById('webcam');
 
-        // Cámara
         async function iniciarCamara() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
@@ -83,19 +84,18 @@
             const base64Img = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
             try {
-                // 🛡️ LLAMADA SEGURA AL BACKEND DE VERCEL (Sin exponer llaves)
+                // Llamada al backend de Vercel
                 const response = await fetch('api/analizar', {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
 
                 const data = await response.json();
-                
                 if (data.error) throw new Error(data.error.message || "Error en la IA");
 
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
-                // Lógica de Foto dinámica de tus catálogos
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
                 if (pagMatch) {
                     const n = pagMatch[1];
@@ -110,7 +110,7 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Error de conexión: ${err.message}</p>`;
+                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Error: ${err.message}</p>`;
             }
         }
     </script>
