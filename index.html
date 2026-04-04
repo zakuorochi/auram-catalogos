@@ -94,7 +94,7 @@
     // CAMBIA LA LÍNEA DE ABAJO PARA VER EL ERROR REAL:
     document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Detalle técnico: ${err.message}</p>`;
 }
-
+{
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
