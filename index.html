@@ -16,6 +16,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #res-body { text-align: left; max-width: 500px; line-height: 1.7; font-size: 1.1rem; overflow-y: auto; max-height: 60vh; color: #eee; }
         .btn-foto { background: #00d1ff; color: #000; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; }
+        .error-box { background: #222; border-left: 4px solid #ff4444; padding: 15px; text-align: left; font-family: monospace; font-size: 0.9rem; color: #ff8888; }
     </style>
 </head>
 <body>
@@ -79,7 +80,7 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             
-            // Compresión al 0.5 para asegurar que pase por Vercel
+            // Comprimimos la imagen para evitar que Vercel la rechace por peso
             const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
@@ -91,7 +92,12 @@
 
                 const data = await response.json();
                 
-                if (data.error) throw new Error(data.error.message || "Error en la IA");
+                // Si la respuesta indica un error desde nuestra API o Google
+                if (data.isError) {
+                    throw new Error(`[Código ${data.codigo || '???'}] - ${data.detalle}`);
+                }
+
+                if (!data.candidates) throw new Error("La IA no devolvió candidatos. Intenta con más luz.");
 
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
@@ -109,7 +115,17 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Detalle técnico: ${err.message}</p>`;
+                // Mostramos el diagnóstico detallado para saber qué corregir
+                document.getElementById('res-body').innerHTML = `
+                    <h3 style="color:#ff4444; letter-spacing:2px;">⚠️ DIAGNÓSTICO AURAM</h3>
+                    <div class="error-box">
+                        ${err.message}
+                    </div>
+                    <p style="font-size:0.8rem; color:#888; margin-top:15px; line-height:1.4;">
+                        Si el código es 429, espera 1 minuto.<br>
+                        Si el detalle menciona "Safety", intenta con otra pose o luz.
+                    </p>
+                `;
             }
         }
     </script>
