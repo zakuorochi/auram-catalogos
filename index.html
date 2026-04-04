@@ -157,17 +157,19 @@ const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
 
 if (generoMatch && pagMatch) {
-    // Limpiamos cualquier espacio o salto de línea extra
     const gen = generoMatch[1].toLowerCase().trim(); 
-    const n = pagMatch[1].trim();
+    const nOriginal = pagMatch[1].trim();
     
-    // URL MAESTRA (Asegúrate que el nombre del repo sea exacto)
-    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/pagina_${n}.jpg`;
+    // 💡 Lógica para convertir "1" en "0001"
+    const nConCeros = nOriginal.padStart(4, '0'); 
     
-    // Reemplazamos la palabra FOTO por el botón
+    // Construimos el nombre exacto: hombre_page-0001.jpg o mujer_page-0001.jpg
+    const nombreArchivo = `${gen}_page-${nConCeros}.jpg`;
+    
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
+    
     textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
 }
-
 // 2. Limpiar las etiquetas técnicas para que no salgan en pantalla
 textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "");
 textoIA = textoIA.replace(/Página:?\s*\d+/gi, ""); 
