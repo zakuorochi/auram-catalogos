@@ -88,8 +88,12 @@
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
 
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message || "Error en la IA");
+                } catch (err) {
+    document.getElementById('modal-loading').style.display = 'none';
+    document.getElementById('modal-result').style.display = 'flex';
+    // CAMBIA LA LÍNEA DE ABAJO PARA VER EL ERROR REAL:
+    document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Detalle técnico: ${err.message}</p>`;
+}
 
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
