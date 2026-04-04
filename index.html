@@ -78,7 +78,7 @@
             canvas.width = video.videoWidth; 
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            const base64Img = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+            const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
                 // Llamada directa a la API interna de Vercel
