@@ -84,7 +84,7 @@
         <button onclick="location.reload()" style="margin-top:40px; background:#333; color:#fff; border:none; padding:15px 30px; border-radius:12px; font-weight: bold; cursor:pointer;">NUEVO ANÁLISIS</button>
     </div>
 
-    <script>
+  <script>
         const video = document.getElementById('webcam');
 
         // Seguridad de Audio: Detener al salir
@@ -93,7 +93,11 @@
 
         function hablar(texto) {
             window.speechSynthesis.cancel();
-            const limpio = texto.replace(/Página:?\s*\d+/gi, "").replace(/FOTO/gi, "").replace(/<[^>]*>/g, "");
+            // Limpiamos etiquetas antes de hablar
+            const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "")
+                                .replace(/Página:?\s*\d+/gi, "")
+                                .replace(/FOTO/gi, "")
+                                .replace(/<[^>]*>/g, "");
             const m = new SpeechSynthesisUtterance(limpio);
             m.lang = 'es-ES'; m.rate = 0.95;
             window.speechSynthesis.speak(m);
@@ -140,48 +144,41 @@
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
-               // ... dentro de ejecutarIA ...
-const data = await response.json();
-if (data.isError) throw new Error(data.detalle);
 
-let textoIA = data.candidates[0].content.parts[0].text;
-hablar(textoIA);
+                const data = await response.json();
+                if (data.isError) throw new Error(data.detalle);
 
-// DETECTAR GÉNERO Y PÁGINA
-const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
-const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
+                let textoIA = data.candidates[0].content.parts[0].text;
+                
+                // 1. Hablar el texto original (la función hablar lo limpia internamente)
+                hablar(textoIA);
 
-if (generoMatch && pagMatch) {
- // 1. Extraer datos con limpieza de espacios
-const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
-const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
+                // 2. DETECTAR GÉNERO Y PÁGINA (Lógica de ceros: 0001)
+                const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
+                const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
 
-if (generoMatch && pagMatch) {
-    const gen = generoMatch[1].toLowerCase().trim(); 
-    const nOriginal = pagMatch[1].trim();
-    
-    // 💡 Lógica para convertir "1" en "0001"
-    const nConCeros = nOriginal.padStart(4, '0'); 
-    
-    // Construimos el nombre exacto: hombre_page-0001.jpg o mujer_page-0001.jpg
-    const nombreArchivo = `${gen}_page-${nConCeros}.jpg`;
-    
-    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
-    
-    textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
-}
-// 2. Limpiar las etiquetas técnicas para que no salgan en pantalla
-textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "");
-textoIA = textoIA.replace(/Página:?\s*\d+/gi, ""); 
+                if (generoMatch && pagMatch) {
+                    const gen = generoMatch[1].toLowerCase().trim(); 
+                    const nOriginal = pagMatch[1].trim();
+                    
+                    // Convertir "1" en "0001"
+                    const nConCeros = nOriginal.padStart(4, '0'); 
+                    
+                    // Nombre exacto: hombre_page-0001.jpg
+                    const nombreArchivo = `${gen}_page-${nConCeros}.jpg`;
+                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
+                    
+                    textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
+                }
 
-document.getElementById('res-body').innerHTML = textoIA;
-// Limpiamos la etiqueta técnica de la pantalla para que el usuario no vea "Género: mujer"
-textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "");
+                // 3. Limpiar etiquetas técnicas para la pantalla
+                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "")
+                                 .replace(/Página:?\s*\d+/gi, "");
 
-document.getElementById('modal-loading').style.display = 'none';
-document.getElementById('modal-result').style.display = 'flex';
-document.getElementById('res-body').innerHTML = textoIA;
-// ... resto del catch ...
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = textoIA;
+
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
