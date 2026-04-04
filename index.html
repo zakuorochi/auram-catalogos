@@ -3,10 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AURAM | AI Voice Experience</title>
+    <title>AURAM | Elevate Your Aura</title>
     <style>
-        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
-        #splash { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; letter-spacing: 12px; background: #000; z-index: 1000; transition: 0.8s; pointer-events: none; }
+        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
+        
+        /* PANTALLA DE INICIO (SPLASH) */
+        #splash { 
+            position: fixed; 
+            inset: 0; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            background: #000; 
+            z-index: 1000; 
+            transition: opacity 1s ease, transform 1.2s ease; 
+            cursor: pointer;
+        }
+        .logo-container { text-align: center; }
+        .logo-a { 
+            font-size: 6rem; 
+            color: #00d1ff; 
+            line-height: 1;
+            text-shadow: 0 0 40px rgba(0, 209, 255, 0.5);
+            font-weight: 100;
+        }
+        .brand-name { 
+            font-size: 1.8rem; 
+            letter-spacing: 18px; 
+            font-weight: 200; 
+            margin-top: -10px;
+            margin-left: 18px; /* Compensa el espaciado para centrar */
+        }
+        .aura-msg { 
+            margin-top: 40px;
+            font-size: 0.8rem; 
+            letter-spacing: 4px; 
+            color: #888; 
+            text-transform: uppercase;
+            animation: pulse 2.5s infinite;
+        }
+
+        /* INTERFAZ DE CÁMARA Y RESULTADOS */
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; z-index: 1; background: #000; }
         .ui { position: absolute; bottom: 50px; width: 100%; text-align: center; z-index: 100; }
         .btn-magic { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); font-size: 2.5rem; color: #fff; box-shadow: 0 0 25px rgba(0,209,255,0.4); outline: none; cursor: pointer; }
@@ -14,6 +52,7 @@
         .btn-opt { margin: 10px; padding: 20px; width: 100%; max-width: 280px; border-radius: 15px; border: 1px solid #00d1ff; background: #111; color: #fff; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
         #res-body { text-align: left; max-width: 500px; line-height: 1.7; font-size: 1.1rem; overflow-y: auto; max-height: 60vh; color: #eee; }
         .btn-foto { background: #00d1ff; color: #000; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; }
         .error-box { background: #222; border-left: 4px solid #ff4444; padding: 15px; text-align: left; font-family: monospace; font-size: 0.9rem; color: #ff8888; }
@@ -21,7 +60,14 @@
 </head>
 <body>
 
-    <div id="splash">AURAM</div>
+    <div id="splash" onclick="iniciarExperiencia()">
+        <div class="logo-container">
+            <div class="logo-a">Λ</div>
+            <div class="brand-name">URAM</div>
+        </div>
+        <div class="aura-msg">Toca para elevar tu Aura</div>
+    </div>
+
     <video id="webcam" autoplay playsinline muted></video>
     
     <div class="ui">
@@ -48,32 +94,41 @@
     <script>
         const video = document.getElementById('webcam');
 
-        // FUNCIÓN DE VOZ
         function hablar(texto) {
-            window.speechSynthesis.cancel(); // Detener cualquier voz previa
+            window.speechSynthesis.cancel();
             const limpio = texto.replace(/Página:?\s*\d+/gi, "").replace(/FOTO/gi, "").replace(/<[^>]*>/g, "");
             const m = new SpeechSynthesisUtterance(limpio);
-            m.lang = 'es-ES';
-            m.rate = 0.95;
-            m.pitch = 1.0;
+            m.lang = 'es-ES'; m.rate = 0.95;
             window.speechSynthesis.speak(m);
+        }
+
+        // LÓGICA DE ENTRADA CON RETRASO
+        function iniciarExperiencia() {
+            const msg = document.querySelector('.aura-msg');
+            msg.innerText = "Prepárate para elevar tu aura";
+            msg.style.color = "#00d1ff";
+            
+            // Esperamos 2 segundos exactos antes de entrar
+            setTimeout(() => {
+                const splash = document.getElementById('splash');
+                splash.style.opacity = '0';
+                splash.style.transform = 'scale(1.1)';
+                
+                iniciarCamara();
+                
+                setTimeout(() => { splash.style.display = 'none'; }, 1000);
+            }, 2000);
         }
 
         async function iniciarCamara() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    document.getElementById('splash').style.opacity = '0';
-                    setTimeout(() => document.getElementById('splash').style.display = 'none', 800);
-                };
             } catch (err) {
-                document.getElementById('splash').innerText = "ERROR DE CÁMARA";
+                alert("Activa la cámara para elevar tu Aura.");
             }
         }
 
-        iniciarCamara();
         function abrirMenu() { document.getElementById('modal-opt').style.display = 'flex'; }
         function cerrarModales() { 
             document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); 
@@ -94,13 +149,10 @@
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
-
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
                 let textoIA = data.candidates[0].content.parts[0].text;
-                
-                // Activar la voz antes de procesar el HTML del botón
                 hablar(textoIA);
 
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
@@ -113,7 +165,6 @@
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
                 document.getElementById('res-body').innerHTML = textoIA;
-
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
