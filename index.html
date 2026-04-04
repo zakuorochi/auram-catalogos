@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AURAM | Demo Inversores</title>
+    <title>AURAM | AI Voice Experience</title>
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         #splash { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; letter-spacing: 12px; background: #000; z-index: 1000; transition: 0.8s; pointer-events: none; }
@@ -48,12 +48,20 @@
     <script>
         const video = document.getElementById('webcam');
 
+        // FUNCIÓN DE VOZ
+        function hablar(texto) {
+            window.speechSynthesis.cancel(); // Detener cualquier voz previa
+            const limpio = texto.replace(/Página:?\s*\d+/gi, "").replace(/FOTO/gi, "").replace(/<[^>]*>/g, "");
+            const m = new SpeechSynthesisUtterance(limpio);
+            m.lang = 'es-ES';
+            m.rate = 0.95;
+            m.pitch = 1.0;
+            window.speechSynthesis.speak(m);
+        }
+
         async function iniciarCamara() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" }, 
-                    audio: false 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
                 video.onloadedmetadata = () => {
                     video.play();
@@ -62,44 +70,39 @@
                 };
             } catch (err) {
                 document.getElementById('splash').innerText = "ERROR DE CÁMARA";
-                console.error(err);
             }
         }
 
         iniciarCamara();
-
         function abrirMenu() { document.getElementById('modal-opt').style.display = 'flex'; }
-        function cerrarModales() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
+        function cerrarModales() { 
+            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); 
+            window.speechSynthesis.cancel();
+        }
 
         async function ejecutarIA(ocasion) {
             document.getElementById('modal-opt').style.display = 'none';
             document.getElementById('modal-loading').style.display = 'flex';
 
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; 
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            // Comprimimos la imagen para evitar que Vercel la rechace por peso
             const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
-           const response = await fetch('/api/analizar', { // Agregamos la barra / antes de api
-            method: 'POST',
-            body: JSON.stringify({ image: base64Img, ocasion: ocasion }) // Eliminamos el Header aquí, Vercel lo prefiere así a veces
-        });
+                const response = await fetch('/api/analizar', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: base64Img, ocasion: ocasion })
+                });
 
                 const data = await response.json();
-                
-                // Si la respuesta indica un error desde nuestra API o Google
-                if (data.isError) {
-                    throw new Error(`[Código ${data.codigo || '???'}] - ${data.detalle}`);
-                }
-
-                if (!data.candidates) throw new Error("La IA no devolvió candidatos. Intenta con más luz.");
+                if (data.isError) throw new Error(data.detalle);
 
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
+                // Activar la voz antes de procesar el HTML del botón
+                hablar(textoIA);
+
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
                 if (pagMatch) {
                     const n = pagMatch[1];
@@ -114,17 +117,7 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                // Mostramos el diagnóstico detallado para saber qué corregir
-                document.getElementById('res-body').innerHTML = `
-                    <h3 style="color:#ff4444; letter-spacing:2px;">⚠️ DIAGNÓSTICO AURAM</h3>
-                    <div class="error-box">
-                        ${err.message}
-                    </div>
-                    <p style="font-size:0.8rem; color:#888; margin-top:15px; line-height:1.4;">
-                        Si el código es 429, espera 1 minuto.<br>
-                        Si el detalle menciona "Safety", intenta con otra pose o luz.
-                    </p>
-                `;
+                document.getElementById('res-body').innerHTML = `<div class="error-box">${err.message}</div>`;
             }
         }
     </script>
