@@ -140,22 +140,34 @@
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
-                const data = await response.json();
-                if (data.isError) throw new Error(data.detalle);
+               // ... dentro de ejecutarIA ...
+const data = await response.json();
+if (data.isError) throw new Error(data.detalle);
 
-                let textoIA = data.candidates[0].content.parts[0].text;
-                hablar(textoIA);
+let textoIA = data.candidates[0].content.parts[0].text;
+hablar(textoIA);
 
-                const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
-                if (pagMatch) {
-                    const n = pagMatch[1];
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/mujer/pagina_${n}.jpg`;
-                    textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
-                }
+// DETECTAR GÉNERO Y PÁGINA
+const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
+const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
 
-                document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = textoIA;
+if (generoMatch && pagMatch) {
+    const gen = generoMatch[1].toLowerCase().trim(); // hombre o mujer
+    const n = pagMatch[1];
+    
+    // Construimos la URL dinámica usando la carpeta correcta
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/pagina_${n}.jpg`;
+    
+    textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
+}
+
+// Limpiamos la etiqueta técnica de la pantalla para que el usuario no vea "Género: mujer"
+textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "");
+
+document.getElementById('modal-loading').style.display = 'none';
+document.getElementById('modal-result').style.display = 'flex';
+document.getElementById('res-body').innerHTML = textoIA;
+// ... resto del catch ...
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
