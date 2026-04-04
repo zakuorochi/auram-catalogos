@@ -4,56 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AURAM | Elevate Your Aura</title>
-    <style>
-        body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
-        
-        /* PANTALLA DE CARGA AUTOMÁTICA */
-        #splash { 
-            position: fixed; inset: 0; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            background: #000; z-index: 1000; 
-            transition: opacity 1s ease; 
-        }
-        .logo-a { 
-            font-size: 6rem; color: #00d1ff; 
-            text-shadow: 0 0 40px rgba(0, 209, 255, 0.5); font-weight: 100; 
-        }
-        .brand-name { font-size: 1.8rem; letter-spacing: 18px; font-weight: 200; margin-top: -10px; margin-left: 18px; }
-        .aura-msg { 
-            margin-top: 40px; font-size: 0.8rem; letter-spacing: 4px; color: #00d1ff; 
-            text-transform: uppercase; animation: pulse 1.5s infinite; 
-        }
+<style>
+    /* ... tus estilos generales ... */
+    
+    /* PANTALLA DE CARGA (SPLASH) - NUEVO ESTILO CON LOGO INDEPENDIENTE */
+    #splash { 
+        position: fixed; inset: 0; 
+        display: flex; flex-direction: column; justify-content: center; align-items: center; 
+        background: #000; z-index: 1000; 
+        transition: opacity 1.2s ease, transform 1s ease; 
+    }
+    
+    /* Contenedor principal para logo y texto */
+    .brand-container { text-align: center; display: flex; flex-direction: column; align-items: center;}
 
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; z-index: 1; background: #000; }
-        .ui { position: absolute; bottom: 50px; width: 100%; text-align: center; z-index: 100; }
-        .btn-magic { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); font-size: 2.5rem; color: #fff; box-shadow: 0 0 25px rgba(0,209,255,0.4); cursor: pointer; outline: none; }
+    /* Contenedor del Logo Estilizado (réplica de la referencia en blanco) */
+    .logo-a-icon { 
+        width: 100px; /* Tamaño del icono */
+        height: 100px; /* Tamaño del icono */
+        margin-bottom: 30px; /* Espacio entre el icono y la palabra */
+        background-color: transparent;
+        /* Usamos un degradado para replicar la forma de la A de la referencia en blanco */
+        background-image: 
+            /* Barra izquierda oblicua */
+            linear-gradient(to right, #fff 0%, #fff 35%, transparent 35%, transparent 100%),
+            /* Barra derecha oblicua */
+            linear-gradient(to left, #fff 0%, #fff 35%, transparent 35%, transparent 100%),
+            /* Barra central horizontal */
+            linear-gradient(to bottom, transparent 0%, transparent 45%, #fff 45%, #fff 55%, transparent 55%, transparent 100%);
+        background-size: 
+            65% 100%, /* Barra izquierda */
+            65% 100%, /* Barra derecha */
+            100% 65%; /* Barra central */
+        background-position: 
+            0% 0%, /* Barra izquierda */
+            100% 0%, /* Barra derecha */
+            0% 0%; /* Barra central */
+        background-repeat: no-repeat;
+        /* Efecto de máscara para crear la forma de la referencia */
+        -webkit-mask-image: linear-gradient(to bottom, #fff 0%, #fff 100%);
+        mask-image: linear-gradient(to bottom, #fff 0%, #fff 100%);
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
         
-        /* MODAL DE OPCIONES EN CUADRÍCULA */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 20px; text-align: center; }
-        .grid-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px; margin-top: 20px; }
-        
-        .btn-opt { 
-            padding: 18px 5px; border-radius: 15px; border: 1px solid #333; 
-            background: #111; color: #fff; font-size: 0.9rem; font-weight: bold; 
-            cursor: pointer; transition: 0.3s; outline: none;
-        }
-        .btn-opt:active { background: #00d1ff; color: #000; border-color: #00d1ff; }
+    }
 
-        .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-        
-        #res-body { text-align: left; max-width: 500px; line-height: 1.7; font-size: 1.1rem; overflow-y: auto; max-height: 60vh; color: #eee; }
-        .btn-foto { background: #00d1ff; color: #000; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; }
-    </style>
-</head>
-<body>
+    /* La palabra completa en blanco */
+    .brand-name { 
+        font-size: 2.5rem; 
+        letter-spacing: 15px; /* Menos espacio para que se lea mejor como palabra */
+        font-weight: 300; 
+        color: #fff;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    }
 
-    <div id="splash">
-        <div class="logo-a">Λ</div>
-        <div class="brand-name">URAM</div>
-        <div class="aura-msg">Prepárate para elevar tu aura</div>
+    .aura-msg { 
+        margin-top: 50px; 
+        font-size: 0.8rem; 
+        letter-spacing: 4px; 
+        color: #888; 
+        text-transform: uppercase; 
+        animation: pulse 2s infinite; 
+    }
+    
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* ... resto de estilos de video, modal y botones ... */
+</style>
+
+<div id="splash">
+    <div class="brand-container">
+        <div class="logo-a-icon"></div>
+        <div class="brand-name">AURAM</div>
     </div>
+    <div class="aura-msg">Prepárate para elevar tu aura</div>
+</div>
 
     <video id="webcam" autoplay playsinline muted></video>
     
