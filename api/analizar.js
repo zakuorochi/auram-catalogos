@@ -6,8 +6,10 @@ export default async function handler(req, res) {
     const { image, ocasion } = JSON.parse(req.body);
     const API_KEY = process.env.GEMINI_API_KEY;
 
-    // 🚀 EL NOMBRE EXACTO QUE ENCONTRAMOS EN TU LISTA:
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    if (!API_KEY) return res.status(200).json({ error: "Falta configurar la llave en Vercel" });
+
+    // 🚀 USANDO EL MODELO LITE (MÁS RÁPIDO Y ESTABLE)
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -15,21 +17,26 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         contents: [{
           parts: [
-            { text: `Eres AURAM, asesor de moda empático. El usuario va a una ${ocasion}. Analiza la foto y recomienda una prenda de catálogo. Indica Página: [Número] y la palabra FOTO al final.` },
+            { text: `Eres AURAM, asesor de moda de lujo. El usuario va a una ${ocasion}. Analiza la foto y recomienda una prenda de catálogo. Indica Página: [Número] y termina con la palabra FOTO.` },
             { inlineData: { mimeType: "image/jpeg", data: image } }
           ]
-        }]
+        }],
+        generationConfig: {
+          temperature: 1, // Mantiene la creatividad y empatía
+          topP: 0.95,
+          maxOutputTokens: 800
+        }
       })
     });
 
     const data = await response.json();
 
     if (data.error) {
-        return res.status(data.error.code || 400).json(data);
+      return res.status(200).json({ error: "Google dice: " + data.error.message });
     }
 
     res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(200).json({ error: "Error de servidor: " + error.message });
   }
 }
