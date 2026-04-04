@@ -78,23 +78,21 @@
             canvas.width = video.videoWidth; 
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // Compresión al 0.5 para asegurar que pase por Vercel
             const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
-                // Llamada directa a la API interna de Vercel
                 const response = await fetch('api/analizar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
 
-                } catch (err) {
-    document.getElementById('modal-loading').style.display = 'none';
-    document.getElementById('modal-result').style.display = 'flex';
-    // CAMBIA LA LÍNEA DE ABAJO PARA VER EL ERROR REAL:
-    document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Detalle técnico: ${err.message}</p>`;
-}
-{
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error.message || "Error en la IA");
+
                 let textoIA = data.candidates[0].content.parts[0].text;
                 
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
@@ -111,7 +109,7 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Error: ${err.message}</p>`;
+                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Detalle técnico: ${err.message}</p>`;
             }
         }
     </script>
