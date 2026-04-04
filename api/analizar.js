@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     if (!API_KEY) return res.status(200).json({ error: "Falta configurar la llave en Vercel" });
 
     // 🚀 USANDO EL MODELO LITE (MÁS RÁPIDO Y ESTABLE)
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-001:generateContent?key=${API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
