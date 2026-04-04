@@ -86,14 +86,16 @@
         <button onclick="location.reload()" style="margin-top:40px; background:#333; color:#fff; border:none; padding:15px 30px; border-radius:12px; font-weight: bold; cursor:pointer;">NUEVO ANÁLISIS</button>
     </div>
 
-    <script>
+<script>
         const video = document.getElementById('webcam');
 
+        // Seguridad de Audio: Detener al salir o cambiar de pestaña
         window.addEventListener('beforeunload', () => { window.speechSynthesis.cancel(); });
         window.addEventListener('blur', () => { window.speechSynthesis.cancel(); });
 
         function hablar(texto) {
             window.speechSynthesis.cancel();
+            // Limpieza profunda para la voz (no lee etiquetas técnicas)
             const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "")
                                 .replace(/Página:?\s*\d+/gi, "")
                                 .replace(/FOTO/gi, "")
@@ -103,12 +105,15 @@
             window.speechSynthesis.speak(m);
         }
 
+        // Carga automática (3 seg)
         window.onload = () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash');
-                splash.style.opacity = '0';
-                iniciarCamara();
-                setTimeout(() => { splash.style.display = 'none'; }, 1000);
+                if(splash) {
+                    splash.style.opacity = '0';
+                    iniciarCamara();
+                    setTimeout(() => { splash.style.display = 'none'; }, 1000);
+                }
             }, 3000);
         };
 
@@ -116,7 +121,7 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
-            } catch (err) { console.log("Cámara no disponible."); }
+            } catch (err) { console.log("Cámara no disponible o denegada."); }
         }
 
         function abrirMenu() { 
@@ -136,6 +141,8 @@
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // Compresión al 50% para velocidad
             const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
@@ -148,23 +155,32 @@
                 if (data.isError) throw new Error(data.detalle);
 
                 let textoIA = data.candidates[0].content.parts[0].text;
+                
+                // 1. Ejecutar voz
                 hablar(textoIA);
 
+                // 2. LÓGICA DE CATÁLOGO (Formato: (n).jpg)
                 const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
 
                 if (generoMatch && pagMatch) {
                     const gen = generoMatch[1].toLowerCase().trim(); 
-                    const nOriginal = pagMatch[1].trim();
-                    const nConCeros = nOriginal.padStart(4, '0'); 
+                    const n = pagMatch[1].trim();
                     
-                    const nombreArchivo = `${gen}_page-${nConCeros}.jpg`;
+                    // IMPORTANTE: Construimos el nombre exacto (n).jpg
+                    // Usamos encodeURIComponent para que los paréntesis ( ) funcionen en la URL
+                    const nombreArchivo = `(${n}).jpg`;
+                    
+                    // URL a tu repositorio auram-catalogos
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
                     
+                    // Insertamos el botón de catálogo
                     textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
                 }
 
-                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
+                // 3. Limpiar texto para visualización en pantalla
+                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "")
+                                 .replace(/Página:?\s*\d+/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
@@ -173,7 +189,7 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">${err.message}</p>`;
+                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Error de conexión: ${err.message}</p>`;
             }
         }
     </script>
