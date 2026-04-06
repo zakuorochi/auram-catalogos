@@ -44,7 +44,7 @@ export default async function handler(req, res) {
           
           TAREA:
           1. Analiza la imagen del usuario para la ocasión: ${ocasion}.
-          2. Escribe una recomendación cálida y agradable de EXACTAMENTE 100 PALABRAS.
+          2. Escribe una recomendación cálida y agradable de EXACTAMENTE 75 PALABRAS.
           3. Describe por qué elegiste la prenda y menciona su PRECIO REAL del catálogo.
 
           CIERRE OBLIGATORIO:
