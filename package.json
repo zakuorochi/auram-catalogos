@@ -1,0 +1,12 @@
+{
+  "name": "auram-backend",
+  "version": "1.0.0",
+  "description": "Backend para AURAM con Vertex AI",
+  "main": "api/analizar.js",
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.1.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
