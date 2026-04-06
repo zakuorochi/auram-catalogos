@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AURAM | El primer asistente estético IA</title>
+    <title>AURAM | El primer asistente de estilo IA</title>
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         
-        /* PANTALLA DE CARGA (SPLASH) - LOGO PNG */
+        /* PANTALLA DE INICIO (SPLASH) - INTERACTIVA */
         #splash { 
             position: fixed; inset: 0; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             background: #000; z-index: 1000; 
             transition: opacity 1s ease; 
             text-align: center;
+            cursor: pointer; /* Indica que se puede tocar */
         }
 
-        .logo-container { text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .logo-container { text-align: center; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
 
-        /* Estilo para tu logo Amoresa */
         .logo-a-png { 
-            width: 180px; /* Ajustado para que destaque en el tótem */
+            width: 180px; 
             height: auto; 
             margin-bottom: 15px;
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4)); 
@@ -38,16 +38,16 @@
 
         .aura-msg { 
             margin-top: 50px; 
-            font-size: 0.75rem; 
+            font-size: 0.85rem; 
             line-height: 1.8;
             letter-spacing: 3px; 
             color: #00d1ff; 
             max-width: 80%;
             text-transform: uppercase; 
-            animation: pulse 1.8s infinite; 
+            /* Se eliminó la animación de parpadeo */
+            opacity: 1; 
+            pointer-events: none;
         }
-
-        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
         /* INTERFAZ DE CÁMARA Y MODALES */
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; z-index: 1; background: #000; }
@@ -58,8 +58,7 @@
         .grid-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px; margin-top: 30px; }
         
         .btn-opt { padding: 18px 5px; border-radius: 15px; border: 1px solid #333; background: #111; color: #fff; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: 0.3s; outline: none; }
-        .btn-opt:active { background: #00d1ff; color: #000; border-color: #00d1ff; }
-
+        
         .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -69,14 +68,14 @@
 </head>
 <body>
 
-    <div id="splash">
+    <div id="splash" onclick="entrarAURAM()">
         <div class="logo-container">
             <img src="logo-auram.png" alt="A" class="logo-a-png">
             <div class="brand-name">AURAM</div>
         </div>
         <div class="aura-msg">
-            El primer asistente estético IA<br>
-            ¿Estás listo para elevar tu aura?
+            El primer asistente de estilo IA<br>
+            Toca la pantalla para elevar tu aura
         </div>
     </div>
 
@@ -112,37 +111,33 @@
     <script>
         const video = document.getElementById('webcam');
 
-        window.addEventListener('beforeunload', () => { window.speechSynthesis.cancel(); });
-        window.addEventListener('blur', () => { window.speechSynthesis.cancel(); });
-
-        function hablar(texto) {
-            window.speechSynthesis.cancel();
-            const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "")
-                                .replace(/Página:?\s*\d+/gi, "")
-                                .replace(/FOTO/gi, "")
-                                .replace(/<[^>]*>/g, "");
-            const m = new SpeechSynthesisUtterance(limpio);
-            m.lang = 'es-ES'; m.rate = 0.95;
-            window.speechSynthesis.speak(m);
+        // Función para activar la experiencia al tocar
+        function entrarAURAM() {
+            const splash = document.getElementById('splash');
+            splash.style.opacity = '0';
+            iniciarCamara();
+            setTimeout(() => { splash.style.display = 'none'; }, 1000);
         }
 
-        // CARGA AUTOMÁTICA DE 3 SEGUNDOS
-        window.onload = () => {
-            setTimeout(() => {
-                const splash = document.getElementById('splash');
-                if(splash) {
-                    splash.style.opacity = '0';
-                    iniciarCamara();
-                    setTimeout(() => { splash.style.display = 'none'; }, 1000);
-                }
-            }, 3000);
-        };
+        // Ya no hay window.onload automático
 
         async function iniciarCamara() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
-            } catch (err) { console.log("Cámara no disponible."); }
+            } catch (err) { alert("Cámara no disponible. Revisa los permisos."); }
+        }
+
+        // Resto de la lógica se mantiene igual
+        window.addEventListener('beforeunload', () => { window.speechSynthesis.cancel(); });
+        window.addEventListener('blur', () => { window.speechSynthesis.cancel(); });
+
+        function hablar(texto) {
+            window.speechSynthesis.cancel();
+            const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "").replace(/FOTO/gi, "").replace(/<[^>]*>/g, "");
+            const m = new SpeechSynthesisUtterance(limpio);
+            m.lang = 'es-ES'; m.rate = 0.95;
+            window.speechSynthesis.speak(m);
         }
 
         function abrirMenu() { 
@@ -158,7 +153,6 @@
         async function ejecutarIA(ocasion) {
             document.getElementById('modal-opt').style.display = 'none';
             document.getElementById('modal-loading').style.display = 'flex';
-
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
@@ -169,28 +163,22 @@
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
-
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
-
                 let textoIA = data.candidates[0].content.parts[0].text;
                 hablar(textoIA);
-
                 const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
-
                 if (generoMatch && pagMatch) {
                     const gen = generoMatch[1].toLowerCase().trim(); 
                     const n = pagMatch[1].trim();
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${n}).jpg`;
                     textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
                 }
-
                 textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
                 document.getElementById('res-body').innerHTML = textoIA;
-
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
