@@ -1,6 +1,7 @@
 const { VertexAI } = require('@google-cloud/vertexai');
 
 export default async function handler(req, res) {
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(200).json({ isError: true, detalle: "Método no permitido" });
 
   try {
@@ -13,45 +14,47 @@ export default async function handler(req, res) {
       googleAuthOptions: { credentials }
     });
 
+    // Usamos Gemini 2.5 Flash
     const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    // --- PASO 1: DETECTAR GÉNERO ---
+    // --- PASO 1: DETECTAR GÉNERO (RÁPIDO) ---
     const promptGenero = {
       contents: [{
         role: 'user',
         parts: [
-          { text: "Responde solo una palabra: 'hombre' o 'mujer' según la persona en la foto." },
+          { text: "Responde solo una palabra: 'hombre' o 'mujer' según la persona de la foto." },
           { inlineData: { mimeType: 'image/jpeg', data: image } }
         ]
       }]
     };
-    const resGenero = await model.generateContent(promptGenero);
-    const generoDetectado = resGenero.response.candidates[0].content.parts[0].text.toLowerCase().trim();
+    const resGen = await model.generateContent(promptGenero);
+    const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
 
-    // Seleccionamos solo el PDF necesario
-    const urlPdf = generoDetectado.includes('mujer') 
+    // Seleccionamos el PDF correcto del Bucket
+    const urlPdf = gen.includes('mujer') 
                    ? 'gs://auram-assets-01/mujer.pdf' 
                    : 'gs://auram-assets-01/hombre.pdf';
 
-    // --- PASO 2: RECOMENDACIÓN REAL BASADA EN EL PDF ---
+    // --- PASO 2: RECOMENDACIÓN BASADA 100% EN EL PDF ---
     const promptFinal = {
       contents: [{
         role: 'user',
         parts: [
-          { text: `Eres AURAM, experto en moda. Tienes abierto el catálogo de ${generoDetectado}.
+          { text: `Eres AURAM, el asistente de estilo de la tienda. 
+          TIENES EL CATÁLOGO DE ${gen.toUpperCase()} ABIERTO DELANTE DE TI.
           
-          INSTRUCCIONES CRÍTICAS:
-          1. Lee las páginas del PDF adjunto.
-          2. Busca una prenda para la ocasión: ${ocasion}.
-          3. EXTRAE EL NOMBRE Y PRECIO LITERAL. Si el PDF dice "Camisa Oxford S/ 120", NO digas "Polo casual S/ 100".
-          4. Tu respuesta debe basarse 100% en el texto que VEAS en el PDF. Si no estás seguro, cita la página.
-
+          INSTRUCCIONES DE EXTRACCIÓN LITERAL:
+          1. Mira la foto del usuario y la ocasión: ${ocasion}.
+          2. BUSCA en el PDF adjunto una prenda que encaje.
+          3. PROHIBIDO INVENTAR PRECIOS. Debes leer el precio que está escrito en el catálogo.
+          4. PROHIBIDO INVENTAR NOMBRES. Usa el nombre exacto de la prenda del catálogo.
+          
           RESPUESTA:
-          - Consejo empático (máx 50 palabras).
-          - Prenda y Precio EXACTOS del PDF.
+          - Da un consejo de estilo elegante (máx 50 palabras).
+          - Escribe: "Te recomiendo [Nombre de Prenda del PDF] a [Precio del PDF]".
           
-          CIERRE:
-          Género: ${generoDetectado}
+          FORMATO DE CIERRE:
+          Género: ${gen}
           Página: [Número de página del PDF] FOTO` 
           },
           { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
@@ -60,14 +63,15 @@ export default async function handler(req, res) {
       }]
     };
 
-    const resFinal = await model.generateContent(promptFinal);
-    const textoFinal = resFinal.response.candidates[0].content.parts[0].text;
+    const result = await model.generateContent(promptFinal);
+    const responseIA = result.response.candidates[0].content.parts[0].text;
 
     return res.status(200).json({ 
-        candidates: [{ content: { parts: [{ text: textoFinal }] } }] 
+        candidates: [{ content: { parts: [{ text: responseIA }] } }] 
     });
 
   } catch (err) {
+    console.error("Error:", err);
     return res.status(200).json({ isError: true, detalle: err.message });
   }
 }
