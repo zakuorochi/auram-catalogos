@@ -3,46 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AURAM | Elevate Your Aura</title>
+    <title>AURAM | El primer asistente estético IA</title>
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         
-        /* PANTALLA DE CARGA (SPLASH) - VOLVIENDO AL ESTILO ANTERIOR */
+        /* PANTALLA DE CARGA (SPLASH) - ESTILO AMORESA */
         #splash { 
             position: fixed; inset: 0; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             background: #000; z-index: 1000; 
             transition: opacity 1s ease; 
-        }
-        .logo-container { text-align: center; }
-        .logo-a { 
-            font-size: 6rem; color: #00d1ff; 
-            text-shadow: 0 0 40px rgba(0, 209, 255, 0.5); font-weight: 100; 
-        }
-        .brand-name { 
-            font-size: 1.8rem; 
-            letter-spacing: 18px; 
-            font-weight: 200; 
-            margin-top: -10px; 
-            margin-left: 18px; /* Centrado óptico */
-            color: #fff;
-        }
-        .aura-msg { 
-            margin-top: 40px; font-size: 0.8rem; letter-spacing: 4px; color: #00d1ff; 
-            text-transform: uppercase; animation: pulse 1.5s infinite; 
+            text-align: center;
         }
 
-        /* RESTO DE LA INTERFAZ */
+        .logo-container { text-align: center; }
+
+        /* Réplica visual de la 'A' de Amoresa */
+        .logo-a { 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            font-size: 7.5rem; 
+            color: #fff; 
+            font-weight: 100;
+            line-height: 0.8;
+            font-style: italic;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            display: inline-block;
+        }
+
+        .brand-name { 
+            font-size: 1.8rem; 
+            letter-spacing: 20px; 
+            font-weight: 200; 
+            margin-top: 10px; 
+            margin-left: 20px; /* Compensa el espaciado para centrar */
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .aura-msg { 
+            margin-top: 50px; 
+            font-size: 0.75rem; 
+            line-height: 1.8;
+            letter-spacing: 3px; 
+            color: #00d1ff; 
+            max-width: 80%;
+            text-transform: uppercase; 
+            animation: pulse 1.8s infinite; 
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+        /* INTERFAZ DE CÁMARA Y MODALES */
         video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; z-index: 1; background: #000; }
         .ui { position: absolute; bottom: 50px; width: 100%; text-align: center; z-index: 100; }
         .btn-magic { width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fff; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); font-size: 2.5rem; color: #fff; box-shadow: 0 0 25px rgba(0,209,255,0.4); cursor: pointer; outline: none; }
+        
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 20px; text-align: center; }
-        .grid-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px; margin-top: 20px; }
+        .grid-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 350px; margin-top: 30px; }
+        
         .btn-opt { padding: 18px 5px; border-radius: 15px; border: 1px solid #333; background: #111; color: #fff; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: 0.3s; outline: none; }
         .btn-opt:active { background: #00d1ff; color: #000; border-color: #00d1ff; }
+
         .loader { border: 4px solid #222; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        
         #res-body { text-align: left; max-width: 500px; line-height: 1.7; font-size: 1.1rem; overflow-y: auto; max-height: 60vh; color: #eee; }
         .btn-foto { background: #00d1ff; color: #000; padding: 15px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; }
     </style>
@@ -51,10 +75,13 @@
 
     <div id="splash">
         <div class="logo-container">
-            <div class="logo-a">▲</div>
+            <div class="logo-a">A</div>
             <div class="brand-name">AURAM</div>
         </div>
-        <div class="aura-msg">Prepárate para elevar tu aura</div>
+        <div class="aura-msg">
+            El primer asistente estético IA<br>
+            ¿Estás listo para elevar tu aura?
+        </div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -86,16 +113,14 @@
         <button onclick="location.reload()" style="margin-top:40px; background:#333; color:#fff; border:none; padding:15px 30px; border-radius:12px; font-weight: bold; cursor:pointer;">NUEVO ANÁLISIS</button>
     </div>
 
-<script>
+    <script>
         const video = document.getElementById('webcam');
 
-        // Seguridad de Audio: Detener al salir o cambiar de pestaña
         window.addEventListener('beforeunload', () => { window.speechSynthesis.cancel(); });
         window.addEventListener('blur', () => { window.speechSynthesis.cancel(); });
 
         function hablar(texto) {
             window.speechSynthesis.cancel();
-            // Limpieza profunda para la voz (no lee etiquetas técnicas)
             const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "")
                                 .replace(/Página:?\s*\d+/gi, "")
                                 .replace(/FOTO/gi, "")
@@ -105,7 +130,7 @@
             window.speechSynthesis.speak(m);
         }
 
-        // Carga automática (3 seg)
+        // CARGA AUTOMÁTICA DE 3 SEGUNDOS
         window.onload = () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash');
@@ -114,14 +139,14 @@
                     iniciarCamara();
                     setTimeout(() => { splash.style.display = 'none'; }, 1000);
                 }
-            }, 3000);
+            }, 3000); // 3 Segundos
         };
 
         async function iniciarCamara() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
-            } catch (err) { console.log("Cámara no disponible o denegada."); }
+            } catch (err) { console.log("Cámara no disponible."); }
         }
 
         function abrirMenu() { 
@@ -141,8 +166,6 @@
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            // Compresión al 50% para velocidad
             const base64Img = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
 
             try {
@@ -155,33 +178,20 @@
                 if (data.isError) throw new Error(data.detalle);
 
                 let textoIA = data.candidates[0].content.parts[0].text;
-                
-                // 1. Ejecutar voz
                 hablar(textoIA);
 
-                // 2. LÓGICA DE CATÁLOGO (Formato: (n).jpg)
                 const generoMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
                 const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
 
                 if (generoMatch && pagMatch) {
                     const gen = generoMatch[1].toLowerCase().trim(); 
                     const n = pagMatch[1].trim();
-                    
-                    // IMPORTANTE: Construimos el nombre exacto (n).jpg
-                    // Usamos encodeURIComponent para que los paréntesis ( ) funcionen en la URL
                     const nombreArchivo = `(${n}).jpg`;
-                    
-                    // URL a tu repositorio auram-catalogos
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
-                    
-                    // Insertamos el botón de catálogo
                     textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
                 }
 
-                // 3. Limpiar texto para visualización en pantalla
-                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "")
-                                 .replace(/Página:?\s*\d+/gi, "");
-
+                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
                 document.getElementById('res-body').innerHTML = textoIA;
@@ -189,7 +199,7 @@
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">Error de conexión: ${err.message}</p>`;
+                document.getElementById('res-body').innerHTML = `<p style="color:#ff4444;">${err.message}</p>`;
             }
         }
     </script>
