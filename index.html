@@ -142,47 +142,61 @@
         function abrirMenu() { document.getElementById('modal-opt').style.display = 'flex'; }
         function cerrarModales() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
 
-        async function ejecutarIA(ocasion) {
-            cerrarModales();
-            document.getElementById('modal-loading').style.display = 'flex';
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+     async function ejecutarIA(ocasion) {
+    cerrarModales();
+    document.getElementById('modal-loading').style.display = 'flex';
+    
+    // Captura de imagen
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
-            try {
-                const response = await fetch('/api/analizar', {
-                    method: 'POST',
-                    body: JSON.stringify({ image: base64Img, ocasion: ocasion })
-                });
-                const data = await response.json();
-                let textoIA = data.candidates[0].content.parts[0].text;
-                
-                hablar(textoIA);
+    try {
+        const response = await fetch('/api/analizar', {
+            method: 'POST',
+            body: JSON.stringify({ image: base64Img, ocasion: ocasion })
+        });
+        const data = await response.json();
+        let textoIA = data.candidates[0].content.parts[0].text;
+        
+        hablar(textoIA);
 
-                const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
-                const genMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
+        // --- LÓGICA DE MINIATURA MEJORADA ---
+        const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
+        const genMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
 
-                if (pagMatch && genMatch) {
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${genMatch[1].toLowerCase()}/(${pagMatch[1]}).jpg`;
-                    const htmlFoto = `<div class="thumb-container">
-                        <img src="${urlFoto}" class="thumb-img">
-                        <p style="font-size:0.7rem; color:#00d1ff; margin-top:10px;">RECOMENDACIÓN AURAM</p>
-                    </div>`;
-                    textoIA = textoIA.replace(/FOTO/g, htmlFoto);
-                }
+        if (pagMatch && genMatch) {
+            const gen = genMatch[1].toLowerCase().trim();
+            const num = pagMatch[1].trim();
+            // Construimos la URL de tu GitHub
+            const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${num}).jpg`;
 
-                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
-                document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = textoIA;
-
-            } catch (err) {
-                alert("Error al conectar con la IA");
-                cerrarModales();
-            }
+            // Diseño de la tarjeta de recomendación
+            const cardHTML = `
+                <div style="margin-top:25px; background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 15px; text-align: center; backdrop-filter: blur(10px);">
+                    <p style="font-size: 0.65rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase;">Selección Exclusiva para Ti</p>
+                    <img src="${urlFoto}" style="width: 100%; max-width: 220px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" 
+                         onerror="this.parentElement.style.display='none'">
+                    <p style="font-size: 0.6rem; color: #666; margin-top: 10px;">Visualización del catálogo oficial</p>
+                </div>
+            `;
+            // Insertamos la tarjeta donde la IA escribió "FOTO"
+            textoIA = textoIA.replace(/FOTO/g, cardHTML);
         }
+
+        // Limpieza de códigos para el usuario
+        textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
+
+        document.getElementById('modal-loading').style.display = 'none';
+        document.getElementById('modal-result').style.display = 'flex';
+        document.getElementById('res-body').innerHTML = `<div style="padding: 10px;">${textoIA}</div>`;
+
+    } catch (err) {
+        alert("Error en la conexión con AURAM");
+        cerrarModales();
+    }
+}
     </script>
 </body>
 </html>
