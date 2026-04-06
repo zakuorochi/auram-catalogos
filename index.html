@@ -7,7 +7,7 @@
     <style>
         body, html { margin: 0; padding: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; width: 100vw; overflow: hidden; }
         
-        /* PANTALLA DE CARGA (SPLASH) - ESTILO AMORESA */
+        /* PANTALLA DE CARGA (SPLASH) - LOGO PNG */
         #splash { 
             position: fixed; inset: 0; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
@@ -16,26 +16,22 @@
             text-align: center;
         }
 
-        .logo-container { text-align: center; }
+        .logo-container { text-align: center; display: flex; flex-direction: column; align-items: center; }
 
-        /* Réplica visual de la 'A' de Amoresa */
-        .logo-a { 
-            font-family: 'Georgia', 'Times New Roman', serif; 
-            font-size: 7.5rem; 
-            color: #fff; 
-            font-weight: 100;
-            line-height: 0.8;
-            font-style: italic;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-            display: inline-block;
+        /* Estilo para tu logo Amoresa */
+        .logo-a-png { 
+            width: 180px; /* Ajustado para que destaque en el tótem */
+            height: auto; 
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4)); 
+            display: block;
         }
 
         .brand-name { 
             font-size: 1.8rem; 
             letter-spacing: 20px; 
             font-weight: 200; 
-            margin-top: 10px; 
-            margin-left: 20px; /* Compensa el espaciado para centrar */
+            margin-left: 20px; 
             color: #fff;
             text-transform: uppercase;
         }
@@ -75,7 +71,7 @@
 
     <div id="splash">
         <div class="logo-container">
-            <div class="logo-a">A</div>
+            <img src="logo-auram.png" alt="A" class="logo-a-png">
             <div class="brand-name">AURAM</div>
         </div>
         <div class="aura-msg">
@@ -139,7 +135,7 @@
                     iniciarCamara();
                     setTimeout(() => { splash.style.display = 'none'; }, 1000);
                 }
-            }, 5000); // 5 Segundos
+            }, 3000);
         };
 
         async function iniciarCamara() {
@@ -186,8 +182,7 @@
                 if (generoMatch && pagMatch) {
                     const gen = generoMatch[1].toLowerCase().trim(); 
                     const n = pagMatch[1].trim();
-                    const nombreArchivo = `(${n}).jpg`;
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/${nombreArchivo}`;
+                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${n}).jpg`;
                     textoIA = textoIA.replace(/FOTO/g, `<br><a href="${urlFoto}" target="_blank" class="btn-foto">📸 VER EN CATÁLOGO</a>`);
                 }
 
