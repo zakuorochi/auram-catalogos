@@ -14,48 +14,33 @@ export default async function handler(req, res) {
       googleAuthOptions: { credentials }
     });
 
-    // Usamos Gemini 2.5 Flash
+    // Usamos el modelo 2.5 Flash
     const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    // --- PASO 1: DETECTAR GÉNERO (RÁPIDO) ---
-    const promptGenero = {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: "Responde solo una palabra: 'hombre' o 'mujer' según la persona de la foto." },
-          { inlineData: { mimeType: 'image/jpeg', data: image } }
-        ]
-      }]
-    };
-    const resGen = await model.generateContent(promptGenero);
+    // 1. Identificamos género para no cargar archivos innecesarios
+    const resGen = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: "Solo responde 'hombre' o 'mujer' según la foto." }, { inlineData: { mimeType: 'image/jpeg', data: image } }] }]
+    });
     const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
+    const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
-    // Seleccionamos el PDF correcto del Bucket
-    const urlPdf = gen.includes('mujer') 
-                   ? 'gs://auram-assets-01/mujer.pdf' 
-                   : 'gs://auram-assets-01/hombre.pdf';
-
-    // --- PASO 2: RECOMENDACIÓN BASADA 100% EN EL PDF ---
+    // 2. Prompt con "Anclaje de Datos" para evitar inventos
     const promptFinal = {
       contents: [{
         role: 'user',
         parts: [
-          { text: `Eres AURAM, el asistente de estilo de la tienda. 
-          TIENES EL CATÁLOGO DE ${gen.toUpperCase()} ABIERTO DELANTE DE TI.
+          { text: `Eres AURAM. Tienes el catálogo de ${gen} frente a ti. 
+          TAREA: Recomienda una prenda para "${ocasion}" USANDO SOLO LOS DATOS DEL PDF.
           
-          INSTRUCCIONES DE EXTRACCIÓN LITERAL:
-          1. Mira la foto del usuario y la ocasión: ${ocasion}.
-          2. BUSCA en el PDF adjunto una prenda que encaje.
-          3. PROHIBIDO INVENTAR PRECIOS. Debes leer el precio que está escrito en el catálogo.
-          4. PROHIBIDO INVENTAR NOMBRES. Usa el nombre exacto de la prenda del catálogo.
-          
+          REGLAS:
+          - Lee el NOMBRE y el PRECIO del PDF. PROHIBIDO inventar.
+          - Si el PDF dice S/. 100, di S/. 100. No aproximes ni supongas.
+          - Describe la prenda brevemente (máx 50 palabras).
+
           RESPUESTA:
-          - Da un consejo de estilo elegante (máx 50 palabras).
-          - Escribe: "Te recomiendo [Nombre de Prenda del PDF] a [Precio del PDF]".
-          
-          FORMATO DE CIERRE:
+          [Tu consejo]
           Género: ${gen}
-          Página: [Número de página del PDF] FOTO` 
+          Página: [Número] FOTO` 
           },
           { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
           { inlineData: { mimeType: 'image/jpeg', data: image } }
@@ -66,12 +51,9 @@ export default async function handler(req, res) {
     const result = await model.generateContent(promptFinal);
     const responseIA = result.response.candidates[0].content.parts[0].text;
 
-    return res.status(200).json({ 
-        candidates: [{ content: { parts: [{ text: responseIA }] } }] 
-    });
+    return res.status(200).json({ candidates: [{ content: { parts: [{ text: responseIA }] } }] });
 
   } catch (err) {
-    console.error("Error:", err);
     return res.status(200).json({ isError: true, detalle: err.message });
   }
 }
