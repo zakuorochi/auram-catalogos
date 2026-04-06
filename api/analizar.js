@@ -24,27 +24,33 @@ export default async function handler(req, res) {
     const pdfMujer = 'gs://auram-assets-01/mujer.pdf';
     const pdfHombre = 'gs://auram-assets-01/hombre.pdf';
 
-    const request = {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: `Eres AURAM, un Personal Shopper de lujo. 
-          INSTRUCCIONES:
-          1. Analiza el género y estilo de la persona en la imagen.
-          2. BUSCA en los PDFs adjuntos la prenda ideal para la ocasión: ${ocasion}.
-          3. Da un consejo empático y sofisticado (máx 70 palabras).
-          4. Indica la PÁGINA EXACTA del PDF donde está la prenda.
-          
-          FORMATO DE SALIDA (ESTRICTO):
-          [Tu consejo de estilo]
-          Género: [hombre/mujer]
-          Página: [Número] FOTO` },
-          { fileData: { mimeType: 'application/pdf', fileUri: pdfMujer } },
-          { fileData: { mimeType: 'application/pdf', fileUri: pdfHombre } },
-          { inlineData: { mimeType: 'image/jpeg', data: image } }
-        ]
-      }]
-    };
+  const request = {
+  contents: [{
+    role: 'user',
+    parts: [
+      { text: `Eres AURAM, el asesor de estilo de la tienda. 
+      TU MISIÓN: Recomendar prendas que APARECEN REALMENTE en los PDFs adjuntos.
+      
+      REGLAS DE ORO:
+      1. ANALIZA visualmente la foto del usuario.
+      2. ESCANEA el PDF correspondiente (Hombre o Mujer).
+      3. EXTRAE el nombre exacto de la prenda y el precio EXACTO que figura en el catálogo PDF.
+      4. Si la prenda no está en el PDF, elige la más parecida del PDF. PROHIBIDO inventar precios o materiales que no estén escritos en el catálogo.
+      
+      RESPUESTA:
+      - Consejo de estilo breve y empático (máx 60 palabras).
+      - Menciona la prenda y el precio según el PDF.
+      
+      FORMATO DE CIERRE (OBLIGATORIO):
+      Género: [hombre/mujer]
+      Página: [Número de la página donde viste la prenda en el PDF] FOTO` 
+      },
+      { fileData: { mimeType: 'application/pdf', fileUri: pdfMujer } },
+      { fileData: { mimeType: 'application/pdf', fileUri: pdfHombre } },
+      { inlineData: { mimeType: 'image/jpeg', data: image } }
+    ]
+  }]
+};
 
     const streamingResp = await generativeModel.generateContent(request);
     const responseIA = streamingResp.response.candidates[0].content.parts[0].text;
