@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AURAM App</title>
+    <title>AURAM | Asistente de Estilo IA</title>
     <style>
-        /* Ajustes para móviles: Evitar scroll y rebote */
         body, html { 
             margin: 0; padding: 0; background: #000; color: #fff; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
@@ -13,68 +12,62 @@
             position: fixed;
         }
         
-        /* SPLASH MOBILE */
+        /* SPLASH INTERACTIVO */
         #splash { 
             position: fixed; inset: 0; display: flex; flex-direction: column; 
             justify-content: center; align-items: center; background: #000; 
             z-index: 1000; transition: opacity 0.8s ease; text-align: center;
         }
-        .logo-a-png { width: 120px; height: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
-        .brand-name { font-size: 1.4rem; letter-spacing: 12px; margin-top: 10px; font-weight: 200; }
-        .aura-msg { margin-top: 30px; font-size: 0.7rem; letter-spacing: 2px; color: #00d1ff; text-transform: uppercase; padding: 0 20px; }
+        .logo-a-png { width: 140px; height: auto; filter: drop-shadow(0 0 15px rgba(255,255,255,0.4)); }
+        .brand-name { font-size: 1.6rem; letter-spacing: 15px; margin-top: 15px; font-weight: 200; text-transform: uppercase; }
+        .aura-msg { margin-top: 40px; font-size: 0.75rem; letter-spacing: 3px; color: #00d1ff; text-transform: uppercase; padding: 0 30px; line-height: 1.6; }
 
-        /* CÁMARA FULLSCREEN MÓVIL */
-        video { 
-            width: 100%; height: 100%; object-fit: cover; 
-            transform: scaleX(-1); /* Efecto espejo para selfie */
-            position: absolute; inset: 0; z-index: 1; 
-        }
+        /* CÁMARA SELFIE */
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); position: absolute; inset: 0; z-index: 1; }
 
-        /* UI INFERIOR (Reachability) */
-        .ui { 
-            position: absolute; bottom: 40px; width: 100%; 
-            display: flex; justify-content: center; z-index: 100; 
-        }
+        /* BOTÓN MÁGICO INFERIOR */
+        .ui { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; z-index: 100; }
         .btn-magic { 
-            width: 75px; height: 75px; border-radius: 50%; 
-            border: none; background: linear-gradient(135deg, #00d1ff, #0072ff); 
-            font-size: 2rem; color: #fff; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            width: 80px; height: 80px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, #00d1ff, #0072ff); 
+            font-size: 2.2rem; color: #fff; 
+            box-shadow: 0 0 30px rgba(0,209,255,0.5);
             display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
         }
 
-        /* MODALES ADAPTADOS A MÓVIL */
+        /* CAPAS DE INTERFAZ */
         .overlay { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.96); 
             display: none; flex-direction: column; align-items: center; 
-            z-index: 200; padding: 20px; padding-top: 60px;
+            z-index: 200; padding: 25px; padding-top: 50px; text-align: center;
         }
-        .grid-opts { 
-            display: grid; grid-template-columns: 1fr; gap: 15px; 
-            width: 90%; max-width: 300px; margin-top: 20px; 
-        }
+        .grid-opts { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 320px; margin-top: 30px; }
         .btn-opt { 
-            padding: 20px; border-radius: 18px; border: 1px solid #222; 
-            background: #111; color: #fff; font-size: 1rem; font-weight: 500;
+            padding: 22px; border-radius: 20px; border: 1px solid #333; 
+            background: #111; color: #fff; font-size: 1.1rem; font-weight: 400; 
+            letter-spacing: 1px;
         }
 
-        /* RESULTADO MÓVIL */
+        /* CUERPO DEL RESULTADO (SCROLLABLE) */
         #res-body { 
-            width: 90%; font-size: 1rem; line-height: 1.6; 
-            color: #ddd; overflow-y: auto; padding-bottom: 20px;
+            width: 100%; max-width: 450px; font-size: 1.05rem; line-height: 1.8; 
+            color: #eee; overflow-y: auto; text-align: left; padding: 10px;
         }
 
-        /* MINIATURA MÓVIL */
-        .thumb-container { 
-            margin-top: 20px; background: #111; 
-            border-radius: 20px; padding: 15px; border: 1px solid #00d1ff;
+        /* DISEÑO DE LA TARJETA DE RECOMENDACIÓN */
+        .card-reco {
+            margin-top: 30px; background: rgba(255,255,255,0.03); 
+            border: 1px solid rgba(0, 209, 255, 0.4); border-radius: 25px; 
+            padding: 20px; text-align: center; backdrop-filter: blur(15px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
-        .thumb-img { width: 100%; max-width: 250px; border-radius: 12px; }
+        .thumb-img { width: 100%; max-width: 260px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+
+        .loader { border: 4px solid #111; border-top: 4px solid #00d1ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .btn-reload {
-            margin-top: 20px; background: #fff; color: #000; 
-            padding: 15px 40px; border-radius: 30px; font-weight: bold; border: none;
-        }
+        .btn-reload { margin-top: 30px; background: #fff; color: #000; padding: 18px 45px; border-radius: 35px; font-weight: bold; border: none; letter-spacing: 1px; }
     </style>
 </head>
 <body onclick="iniciarApp()">
@@ -82,7 +75,7 @@
     <div id="splash">
         <img src="logo-auram.png" class="logo-a-png">
         <div class="brand-name">AURAM</div>
-        <div class="aura-msg">El primer asistente de estilo IA<br>Toca para comenzar</div>
+        <div class="aura-msg">El primer asistente de estilo IA<br>Toca la pantalla para elevar tu aura</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -92,25 +85,26 @@
     </div>
 
     <div id="modal-opt" class="overlay">
-        <h3 style="font-weight:200; letter-spacing: 2px;">¿A DÓNDE VAS HOY?</h3>
+        <h2 style="font-weight:200; letter-spacing: 3px; margin-bottom: 5px;">DESTINO</h2>
+        <p style="font-size: 0.8rem; color: #666; margin-bottom: 20px;">¿A dónde te lleva tu aura hoy?</p>
         <div class="grid-opts">
-            <button class="btn-opt" onclick="ejecutarIA('Boda')">Boda o Gala</button>
-            <button class="btn-opt" onclick="ejecutarIA('Cita')">Una Cita</button>
-            <button class="btn-opt" onclick="ejecutarIA('Trabajo')">Trabajo</button>
-            <button class="btn-opt" onclick="ejecutarIA('Casual')">Día Casual</button>
+            <button class="btn-opt" onclick="ejecutarIA('Boda o Gala')">Boda o Gala</button>
+            <button class="btn-opt" onclick="ejecutarIA('Una Cita')">Una Cita Especial</button>
+            <button class="btn-opt" onclick="ejecutarIA('Trabajo')">Entorno Profesional</button>
+            <button class="btn-opt" onclick="ejecutarIA('Día Casual')">Día Casual de Lujo</button>
         </div>
-        <p onclick="cerrarModales()" style="margin-top:30px; color:#666;">Cerrar</p>
+        <p onclick="cerrarModales()" style="margin-top:40px; color:#444; font-size: 0.9rem; letter-spacing: 2px;">CERRAR</p>
     </div>
 
     <div id="modal-loading" class="overlay">
         <div class="loader"></div>
-        <p>AURAM está analizando tu aura...</p>
+        <p style="letter-spacing:3px; font-size: 0.8rem; color: #00d1ff;">CONECTANDO CON TU ESENCIA...</p>
     </div>
 
-    <div id="modal-result" class="overlay">
+    <div id="modal-result" class="overlay" style="justify-content: flex-start; overflow-y: auto;">
         <div id="res-body"></div>
-        <button class="btn-reload" onclick="location.reload()">REINTENTAR</button>
-    </div>
+        <button class="btn-reload" onclick="location.reload()">NUEVO ANÁLISIS</button>
+        <div style="height: 50px;"></div> </div>
 
     <script>
         const video = document.getElementById('webcam');
@@ -121,82 +115,80 @@
             const splash = document.getElementById('splash');
             splash.style.opacity = '0';
             
-            // Configuración de cámara para móvil (Frontal)
             navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: "user" } 
             }).then(stream => {
                 video.srcObject = stream;
                 appIniciada = true;
                 setTimeout(() => splash.style.display = 'none', 800);
-            }).catch(err => alert("Activa la cámara para usar AURAM"));
+            }).catch(err => alert("Por favor, permite el acceso a la cámara."));
         }
 
         function hablar(texto) {
             window.speechSynthesis.cancel();
-            const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "").replace(/FOTO/gi, "").replace(/<[^>]*>/g, "");
+            // Limpiamos etiquetas para que la voz no las lea
+            const limpio = texto.replace(/Género:?\s*(hombre|mujer)/gi, "")
+                                .replace(/Página:?\s*\d+/gi, "")
+                                .replace(/FOTO/gi, "")
+                                .replace(/<[^>]*>/g, "");
             const m = new SpeechSynthesisUtterance(limpio);
-            m.lang = 'es-ES';
+            m.lang = 'es-ES'; m.rate = 0.95; m.pitch = 1.1;
             window.speechSynthesis.speak(m);
         }
 
-        function abrirMenu() { document.getElementById('modal-opt').style.display = 'flex'; }
+        function abrirMenu() { window.speechSynthesis.cancel(); document.getElementById('modal-opt').style.display = 'flex'; }
         function cerrarModales() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
 
-     async function ejecutarIA(ocasion) {
-    cerrarModales();
-    document.getElementById('modal-loading').style.display = 'flex';
-    
-    // Captura de imagen
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+        async function ejecutarIA(ocasion) {
+            cerrarModales();
+            document.getElementById('modal-loading').style.display = 'flex';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
-    try {
-        const response = await fetch('/api/analizar', {
-            method: 'POST',
-            body: JSON.stringify({ image: base64Img, ocasion: ocasion })
-        });
-        const data = await response.json();
-        let textoIA = data.candidates[0].content.parts[0].text;
-        
-        hablar(textoIA);
+            try {
+                const response = await fetch('/api/analizar', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: base64Img, ocasion: ocasion })
+                });
+                const data = await response.json();
+                let textoIA = data.candidates[0].content.parts[0].text;
+                
+                hablar(textoIA);
 
-        // --- LÓGICA DE MINIATURA MEJORADA ---
-        const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
-        const genMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
+                // --- DETECTOR DE MINIATURA ---
+                const pagMatch = textoIA.match(/Página:?\s*(\d+)/i);
+                const genMatch = textoIA.match(/Género:?\s*(hombre|mujer)/i);
 
-        if (pagMatch && genMatch) {
-            const gen = genMatch[1].toLowerCase().trim();
-            const num = pagMatch[1].trim();
-            // Construimos la URL de tu GitHub
-            const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${num}).jpg`;
+                if (pagMatch && genMatch) {
+                    const gen = genMatch[1].toLowerCase().trim();
+                    const num = pagMatch[1].trim();
+                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${num}).jpg`;
 
-            // Diseño de la tarjeta de recomendación
-            const cardHTML = `
-                <div style="margin-top:25px; background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 15px; text-align: center; backdrop-filter: blur(10px);">
-                    <p style="font-size: 0.65rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase;">Selección Exclusiva para Ti</p>
-                    <img src="${urlFoto}" style="width: 100%; max-width: 220px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" 
-                         onerror="this.parentElement.style.display='none'">
-                    <p style="font-size: 0.6rem; color: #666; margin-top: 10px;">Visualización del catálogo oficial</p>
-                </div>
-            `;
-            // Insertamos la tarjeta donde la IA escribió "FOTO"
-            textoIA = textoIA.replace(/FOTO/g, cardHTML);
+                    const cardHTML = `
+                        <div class="card-reco">
+                            <p style="font-size: 0.65rem; color: #00d1ff; letter-spacing: 4px; margin-bottom: 15px; text-transform: uppercase;">Selección Exclusiva</p>
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
+                            <p style="font-size: 0.6rem; color: #555; margin-top: 15px; letter-spacing: 1px;">CATÁLOGO OFICIAL AURAM</p>
+                        </div>
+                    `;
+                    textoIA = textoIA.replace(/FOTO/g, cardHTML);
+                }
+
+                // Limpieza final de códigos técnicos
+                textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
+
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = textoIA;
+
+            } catch (err) {
+                document.getElementById('modal-loading').style.display = 'none';
+                alert("Error de conexión con la esencia de AURAM");
+            }
         }
-
-        // Limpieza de códigos para el usuario
-        textoIA = textoIA.replace(/Género:?\s*(hombre|mujer)/gi, "").replace(/Página:?\s*\d+/gi, "");
-
-        document.getElementById('modal-loading').style.display = 'none';
-        document.getElementById('modal-result').style.display = 'flex';
-        document.getElementById('res-body').innerHTML = `<div style="padding: 10px;">${textoIA}</div>`;
-
-    } catch (err) {
-        alert("Error en la conexión con AURAM");
-        cerrarModales();
-    }
-}
     </script>
 </body>
 </html>
