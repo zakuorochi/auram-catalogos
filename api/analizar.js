@@ -25,28 +25,31 @@ export default async function handler(req, res) {
     const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
     // 2. Prompt con "Anclaje de Datos" para evitar inventos
-    const promptFinal = {
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: `Eres AURAM. Tienes el catálogo de ${gen} frente a ti. 
-          TAREA: Recomienda una prenda para "${ocasion}" USANDO SOLO LOS DATOS DEL PDF.
-          
-          REGLAS:
-          - Lee el NOMBRE y el PRECIO del PDF. PROHIBIDO inventar.
-          - Si el PDF dice S/. 100, di S/. 100. No aproximes ni supongas.
-          - Describe la prenda brevemente (máx 50 palabras).
+   // ... dentro de tu api/analizar.js en la parte del prompt ...
+const request = {
+  contents: [{
+    role: 'user',
+    parts: [
+      { text: `Actúa como AURAM, un asistente de estilo personal altamente empático y sofisticado. 
+      Tu objetivo es que el usuario se sienta inspirado y seguro de sí mismo.
+      
+      INSTRUCCIONES DE ESTILO:
+      1. Analiza profundamente la imagen del usuario.
+      2. Busca en el catálogo PDF la prenda perfecta para: ${ocasion}.
+      3. Tu recomendación debe ser detallada, cálida y agradable (exactamente 100 palabras). 
+      4. Explica por qué esa prenda armoniza con su presencia y cómo elevará su "aura" en ese evento.
+      5. Cita el nombre de la prenda y el precio exacto que lees en el PDF.
 
-          RESPUESTA:
-          [Tu consejo]
-          Género: ${gen}
-          Página: [Número] FOTO` 
-          },
-          { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
-          { inlineData: { mimeType: 'image/jpeg', data: image } }
-        ]
-      }]
-    };
+      REGLA TÉCNICA CRÍTICA:
+      Al final de tu consejo, DEBES escribir exactamente estas dos líneas:
+      Género: [hombre/mujer]
+      Página: [Número de página] FOTO` 
+      },
+      { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
+      { inlineData: { mimeType: 'image/jpeg', data: image } }
+    ]
+  }]
+};
 
     const result = await model.generateContent(promptFinal);
     const responseIA = result.response.candidates[0].content.parts[0].text;
