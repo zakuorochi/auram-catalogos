@@ -27,6 +27,9 @@
         .loader { border: 3px solid #111; border-top: 3px solid #00d1ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-reload { margin-top: 25px; background: #fff; color: #000; padding: 15px 40px; border-radius: 30px; font-weight: bold; border: none; }
+        
+        /* Estilo del mensaje de carga */
+        #loading-msg { color: #00d1ff; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; padding: 0 20px; margin-top: 10px; min-height: 2em; }
     </style>
 </head>
 <body onclick="iniciarApp()">
@@ -56,7 +59,7 @@
 
     <div id="modal-loading" class="overlay">
         <div class="loader"></div>
-        <p style="color: #00d1ff; font-size: 0.8rem;">CONECTANDO CON TU AURA...</p>
+        <p id="loading-msg"></p>
     </div>
 
     <div id="modal-result" class="overlay" style="justify-content: flex-start; overflow-y: auto;">
@@ -69,6 +72,23 @@
         const video = document.getElementById('webcam');
         let appIniciada = false;
         let audioActual = null;
+
+        const frasesMotivacionales = [
+            "Tu estilo es la firma de tu personalidad...",
+            "Buscando prendas que eleven tu aura hoy.",
+            "La elegancia es la única belleza que nunca se desvanece.",
+            "Analizando texturas para tu presencia única.",
+            "Tu confianza es tu mejor accesorio.",
+            "Diseñando el look que hable por ti.",
+            "Conectando con las tendencias que resaltan tu esencia.",
+            "Tu próximo nivel de estilo te espera."
+        ];
+
+        function mostrarMensajeAleatorio() {
+            const msgElemento = document.getElementById('loading-msg');
+            const indice = Math.floor(Math.random() * frasesMotivacionales.length);
+            msgElemento.innerText = frasesMotivacionales[indice];
+        }
 
         function detenerAudio() {
             if (audioActual) { audioActual.pause(); audioActual.currentTime = 0; }
@@ -92,6 +112,7 @@
 
         async function ejecutarIA(ocasion) {
             cerrarModales();
+            mostrarMensajeAleatorio();
             document.getElementById('modal-loading').style.display = 'flex';
             
             const canvas = document.createElement('canvas');
@@ -108,14 +129,12 @@
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
-                // 1. AUDIO NEURAL
                 if (data.audio) {
                     detenerAudio();
                     audioActual = new Audio("data:audio/mp3;base64," + data.audio);
                     audioActual.play().catch(e => console.error("Error audio:", e));
                 }
 
-                // 2. PROCESAR TEXTO Y MINIATURA (Corregido: respuestaFinal)
                 let respuestaFinal = data.texto;
 
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
@@ -124,7 +143,7 @@
                 if (pagMatch && genMatch) {
                     const gen = genMatch[1].toLowerCase().trim();
                     const numRaw = pagMatch[1].trim();
-                    const numFormateado = numRaw.padStart(3, '0'); // Formato (011)
+                    const numFormateado = numRaw.padStart(3, '0');
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
                     const cardHTML = `
@@ -136,7 +155,6 @@
                     respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
                 }
 
-                // Limpieza de códigos técnicos
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
