@@ -62,11 +62,11 @@ export default async function handler(req, res) {
 
     const [responseTTS] = await ttsClient.synthesizeSpeech({
       input: { text: textoParaVoz },
-      voice: { 
-        languageCode: 'es-ES', 
-        name: 'es-ES-Neural2-F', // Voz femenina premium (España)
-        ssmlGender: 'FEMALE' 
-      },
+     voice: { 
+  languageCode: 'es-ES', 
+  name: 'es-ES-Wavenet-C', // Esta voz es femenina, muy clara y elegante
+  ssmlGender: 'FEMALE' 
+},
       audioConfig: { audioEncoding: 'MP3' },
     });
 
