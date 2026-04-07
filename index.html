@@ -147,26 +147,30 @@
                     audioActual.play().catch(e => console.error("Error audio:", e));
                 }
 
-                let textoIA = data.texto;
+            // --- DETECTOR DE MINIATURA CON FORMATO DE 3 DÍGITOS ---
+const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
+const genMatch = textoIA.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                // 2. DETECTOR DE MINIATURA POR REFERENCIA
-                const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
-                const genMatch = textoIA.match(/GENERO_REF:\s*(hombre|mujer)/i);
+if (pagMatch && genMatch) {
+    const gen = genMatch[1].toLowerCase().trim();
+    
+    // Convertimos el número (ej: "11") a formato de 3 dígitos (ej: "011")
+    const numRaw = pagMatch[1].trim();
+    const numFormateado = numRaw.padStart(3, '0'); 
+    
+    // Construimos la URL con los paréntesis y el nuevo formato
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
-                if (pagMatch && genMatch) {
-                    const gen = genMatch[1].toLowerCase().trim();
-                    const num = pagMatch[1].trim();
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${num}).jpg`;
-
-                    const cardHTML = `
-                        <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
-                        </div>
-                    `;
-                    textoIA = textoIA.replace(/FOTO/g, cardHTML);
-                }
-
+    const cardHTML = `
+        <div class="card-reco">
+            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+            <a href="${urlFoto}" target="_blank">
+                <img src="${urlFoto}" class="thumb-img" onerror="console.log('No se encontró: ' + this.src); this.parentElement.parentElement.style.display='none'">
+            </a>
+        </div>
+    `;
+    textoIA = textoIA.replace(/FOTO/g, cardHTML);
+}
                 // Limpieza de etiquetas técnicas para la pantalla
                 textoIA = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*/gi, "");
 
