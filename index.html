@@ -17,7 +17,7 @@
             justify-content: center; align-items: center; background: #000; 
             z-index: 1000; transition: opacity 0.8s ease; text-align: center;
         }
-        .logo-a-png { width: 120px; height: auto; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
+        .logo-a-png { width: 120px; height: auto; filter: drop-shadow(0 0 15px rgba(0,209,255,0.3)); }
         .brand-name { font-size: 1.5rem; letter-spacing: 12px; margin-top: 15px; font-weight: 200; }
         .aura-msg { margin-top: 30px; font-size: 0.7rem; letter-spacing: 2px; color: #00d1ff; text-transform: uppercase; padding: 0 40px; line-height: 1.5; }
 
@@ -44,7 +44,6 @@
             color: #ddd; overflow-y: auto; text-align: left;
         }
 
-        /* CARD DE MINIATURA */
         .card-reco {
             margin-top: 25px; background: rgba(255,255,255,0.05); 
             border: 1px solid #00d1ff; border-radius: 20px; 
@@ -62,7 +61,7 @@
     <div id="splash">
         <img src="logo-auram.png" class="logo-a-png">
         <div class="brand-name">AURAM</div>
-        <div class="aura-msg">Asistente de Estilo IA<br>Toca para comenzar</div>
+        <div class="aura-msg">Asistente de Estilo IA con Google Neural Audio<br>Toca para comenzar</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -84,37 +83,30 @@
 
     <div id="modal-loading" class="overlay">
         <div class="loader"></div>
-        <p style="color: #00d1ff; font-size: 0.8rem;">ESCANEANDO TU AURA...</p>
+        <p style="color: #00d1ff; font-size: 0.8rem;">PROCESANDO TU AURA...</p>
     </div>
 
     <div id="modal-result" class="overlay" style="justify-content: flex-start; overflow-y: auto;">
         <div id="res-body"></div>
-        <button class="btn-reload" onclick="location.reload()">REINTENTAR</button>
+        <button class="btn-reload" onclick="location.reload()">NUEVO ANÁLISIS</button>
         <div style="height: 40px;"></div>
     </div>
 
     <script>
         const video = document.getElementById('webcam');
         let appIniciada = false;
+        let audioActual = null;
 
-        // --- GESTIÓN DE AUDIO ---
+        // --- GESTIÓN DE AUDIO NEURAL ---
         function detenerAudio() {
-            window.speechSynthesis.cancel();
+            if (audioActual) {
+                audioActual.pause();
+                audioActual.currentTime = 0;
+            }
         }
 
-        // Detener audio si el usuario sale de la pestaña o minimiza
+        // Matar audio al minimizar
         window.addEventListener('visibilitychange', () => { if (document.hidden) detenerAudio(); });
-        window.addEventListener('pagehide', detenerAudio);
-
-        function hablar(texto) {
-            detenerAudio();
-            // Limpiamos los códigos de referencia para que la voz no los lea
-            const limpio = texto.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "").replace(/<[^>]*>/g, "");
-            const m = new SpeechSynthesisUtterance(limpio);
-            m.lang = 'es-ES';
-            m.rate = 0.95;
-            window.speechSynthesis.speak(m);
-        }
 
         function iniciarApp() {
             if(appIniciada) return;
@@ -144,12 +136,20 @@
                     method: 'POST',
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
-                const data = await response.json();
-                let textoIA = data.candidates[0].content.parts[0].text;
                 
-                hablar(textoIA);
+                const data = await response.json();
+                if (data.isError) throw new Error(data.detalle);
 
-                // --- DETECTOR DE MINIATURA POR REFERENCIA ---
+                // 1. REPRODUCIR AUDIO NEURAL DE GOOGLE
+                if (data.audio) {
+                    detenerAudio();
+                    audioActual = new Audio("data:audio/mp3;base64," + data.audio);
+                    audioActual.play().catch(e => console.error("Error audio:", e));
+                }
+
+                let textoIA = data.texto;
+
+                // 2. DETECTOR DE MINIATURA POR REFERENCIA
                 const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = textoIA.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
@@ -167,7 +167,7 @@
                     textoIA = textoIA.replace(/FOTO/g, cardHTML);
                 }
 
-                // Limpieza de etiquetas técnicas
+                // Limpieza de etiquetas técnicas para la pantalla
                 textoIA = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
@@ -176,7 +176,7 @@
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
-                alert("Error de conexión");
+                alert("Error: " + err.message);
             }
         }
     </script>
