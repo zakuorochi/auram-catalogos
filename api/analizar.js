@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
         
         // El modelo que te funcionó el lunes
-        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         // 1. Identificar género para elegir el PDF correcto
         const resGen = await model.generateContent({
