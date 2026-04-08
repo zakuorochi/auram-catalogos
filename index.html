@@ -122,6 +122,7 @@
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
+                // 1. REPRODUCIR AUDIO NEURAL (Google Cloud TTS)
                 if (data.audio) {
                     detenerAudio();
                     audioActual = new Audio("data:audio/mp3;base64," + data.audio);
@@ -130,32 +131,33 @@
 
                 let respuestaFinal = data.texto;
 
-                // --- SISTEMA DE MINIATURA ROBUSTO ---
-                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
+                // 2. DETECTOR DE MINIATURA (Nuevo formato IMG_REF de 3 dígitos con paréntesis)
+                const imgMatch = respuestaFinal.match(/IMG_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                if (pagMatch && genMatch) {
+                if (imgMatch && genMatch) {
                     const gen = genMatch[1].toLowerCase().trim();
-                    const numRaw = pagMatch[1].trim();
-                    const numFormateado = numRaw.padStart(3, '0'); 
+                    const numRaw = imgMatch[1].trim();
                     
-                    // Ruta exacta a GitHub
+                    // Formateamos a 3 dígitos (ej: 5 -> 005)
+                    const numFormateado = numRaw.padStart(3, '0');
+                    
+                    // Construimos la URL de GitHub con los paréntesis
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
-                    
-                    console.log("Intentando cargar miniatura:", urlFoto);
+
+                    console.log("Cargando miniatura desde:", urlFoto);
 
                     const cardHTML = `
                         <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" 
-                                 onerror="console.error('No se encontró la imagen:', this.src); this.parentElement.style.display='none';">
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">SELECCIÓN AURAM</p>
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
                         </div>
                     `;
                     respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
                 }
 
-                // Limpieza de etiquetas técnicas para la pantalla
-                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*/gi, "");
+                // Limpieza final de códigos técnicos para el usuario
+                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|IMG_REF:.*/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
@@ -163,7 +165,7 @@
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
-                alert("Error: " + err.message);
+                alert("Error de conexión con AURAM: " + err.message);
             }
         }
     </script>
