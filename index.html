@@ -142,24 +142,28 @@
                 const pagMatch = respuestaFinal.match(/(?:PAGINA_REF|IMG_REF):\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-              if (pagMatch && genMatch) {
+// ... dentro de ejecutarIA ...
+if (pagMatch && genMatch) {
     const gen = genMatch[1].toLowerCase().trim();
-    const numRaw = parseInt(pagMatch[1].trim()); // Convertimos a número para operar
+    const numRaw = parseInt(pagMatch[1].trim()); 
     
-    // AJUSTE: Si la carátula es la página 1 del PDF, pero no está en tus JPG,
-    // restamos 1 para que la página 2 del PDF busque el archivo (001).jpg
-    // Si tus archivos coinciden exactamente con el número del PDF, deja el offset en 0.
-    const offset = 0; // Cambia a -1 o +1 según necesites
+    // AJUSTE DE CARÁTULA: 
+    // Si el PDF dice página 113, pero tu archivo es el (112).jpg, el offset es -1.
+    const offset = -1; 
     const numCorregido = (numRaw + offset).toString().padStart(3, '0');
     
-    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numCorregido}).jpg`;
+    // NUEVA RUTA: Según tu captura, los archivos están directamente en /catalogos/
+    // Si los mueves dentro de /hombre/ o /mujer/, vuelve a agregar ${gen}/ antes de (${numCorregido})
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/(${numCorregido}).jpg`;
 
-    console.log("Página PDF:", numRaw, "-> Buscando archivo:", `(${numCorregido}).jpg`);
+    console.log("Ruta generada para miniatura:", urlFoto);
 
     const cardHTML = `
         <div class="card-reco">
-            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA</p>
-            <img src="${urlFoto}" class="thumb-img" onerror="console.log('Error 404 en:', this.src); this.parentElement.style.display='none'">
+            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+            <img src="${urlFoto}" class="thumb-img" 
+                 onload="console.log('¡Miniatura cargada!')" 
+                 onerror="console.error('Error al cargar:', this.src); this.parentElement.style.display='none'">
         </div>
     `;
     respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
