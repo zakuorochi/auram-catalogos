@@ -38,7 +38,7 @@ export default async function handler(req, res) {
                     - No te limites a un rango; busca el número de imagen (001.jpg, 002.jpg, etc.) que realmente corresponda a la mejor prenda.
 
                     REGLAS DE RESPUESTA:
-                    - Escribe una recomendación cálida de máximo 60 palabras.
+                    - Escribe una recomendación cálida de máximo 80 palabras.
                     - Menciona el precio exacto que aparece en la imagen seleccionada.
                     GENERO_REF: ${gen}
                     PAGINA_REF: [número de página]
