@@ -1,3 +1,4 @@
+
 const { VertexAI } = require('@google-cloud/vertexai');
 const textToSpeech = require('@google-cloud/text-to-speech');
 
@@ -19,7 +20,9 @@ export default async function handler(req, res) {
     });
     
     const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
-    const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.0-flash' }); // Usamos 2.0 que es más estable para Vercel
+
+    // CAMBIO CLAVE: Usamos el nombre de modelo más compatible
+    const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
 
     // 1. DETECCIÓN DE GÉNERO
     const resGen = await model.generateContent({
@@ -27,26 +30,25 @@ export default async function handler(req, res) {
     });
     const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
 
-    // 2. PROMPT DE RECOMENDACIÓN (Ajustado para no saturar)
+    // 2. PROMPT DE RECOMENDACIÓN
+    // Nota: Mencionamos el bucket pero le pedimos que use su conocimiento del catálogo visual.
     const promptFinal = {
       contents: [{
         role: 'user',
         parts: [
-          { text: `Eres AURAM, asistente de moda. El usuario quiere ir a: ${ocasion}. 
-          Analiza su estilo y compáralo con el catálogo de ${gen} que tienes en gs://auram-assets-01/auram-catalogos/${gen}/.
+          { text: `Eres AURAM, asistente de moda de lujo. El usuario quiere un look para: ${ocasion}. 
           
-          TAREA:
-          - Analiza visualmente la ropa y las caracteristicas fisicas del usuario y compárala con TODAS las imágenes disponibles en el catálogo de ${gen.toUpperCase()}.
-          - Selecciona la prenda que mejor complemente su estilo o sea la opción ideal para la ocasión.
-          - No te limites a un rango; busca el número de imagen (001.jpg, 002.jpg, etc.) que realmente corresponda a la mejor prenda.
- REGLAS DE RESPUESTA:
-          - Escribe una recomendación cálida de máximo 60 palabras.
-          - Menciona el precio exacto que aparece en la imagen seleccionada.
+          Tu catálogo de ${gen.toUpperCase()} está alojado en gs://auram-assets-01/auram-catalogos/${gen}/ e incluye imágenes desde la (001).jpg hasta la (070).jpg.
 
-          
-          CIERRE:
+          TAREA:
+          1. Analiza la foto del usuario (estilo, color de piel, complexión).
+          2. Selecciona la prenda del catálogo que mejor le quede.
+          3. Escribe una recomendación de máx. 60 palabras, cálida y profesional.
+          4. Indica el precio que aparece en la imagen.
+
+          CIERRE OBLIGATORIO:
           GENERO_REF: ${gen}
-          IMG_REF: [número]
+          IMG_REF: [número de 3 dígitos, ej: 015]
           FOTO` },
           { inlineData: { mimeType: 'image/jpeg', data: image } }
         ]
@@ -70,8 +72,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error(err);
-    // Enviamos el error como JSON para que el index no explote
-    return res.status(500).json({ isError: true, detalle: err.message });
+    console.error("Error en AURAM:", err);
+    return res.status(200).json({ isError: true, detalle: err.message });
   }
 }
