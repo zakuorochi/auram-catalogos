@@ -122,7 +122,7 @@
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
-                // 1. REPRODUCIR AUDIO NEURAL (Google Cloud TTS)
+                // 1. AUDIO NEURAL
                 if (data.audio) {
                     detenerAudio();
                     audioActual = new Audio("data:audio/mp3;base64," + data.audio);
@@ -131,33 +131,30 @@
 
                 let respuestaFinal = data.texto;
 
-                // 2. DETECTOR DE MINIATURA (Nuevo formato IMG_REF de 3 dígitos con paréntesis)
-                const imgMatch = respuestaFinal.match(/IMG_REF:\s*(\d+)/i);
+                // 2. DETECTOR DE MINIATURA (Lógica del lunes restaurada)
+                // Buscamos PAGINA_REF o IMG_REF para mayor compatibilidad
+                const pagMatch = respuestaFinal.match(/(?:PAGINA_REF|IMG_REF):\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                if (imgMatch && genMatch) {
+                if (pagMatch && genMatch) {
                     const gen = genMatch[1].toLowerCase().trim();
-                    const numRaw = imgMatch[1].trim();
-                    
-                    // Formateamos a 3 dígitos (ej: 5 -> 005)
+                    const numRaw = pagMatch[1].trim();
                     const numFormateado = numRaw.padStart(3, '0');
                     
-                    // Construimos la URL de GitHub con los paréntesis
+                    // Ruta a GitHub con paréntesis (001).jpg
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
-
-                    console.log("Cargando miniatura desde:", urlFoto);
 
                     const cardHTML = `
                         <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">SELECCIÓN AURAM</p>
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA</p>
                             <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
                         </div>
                     `;
                     respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
                 }
 
-                // Limpieza final de códigos técnicos para el usuario
-                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|IMG_REF:.*/gi, "");
+                // Limpieza de etiquetas técnicas antes de mostrar
+                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|IMG_REF:.*|FOTO/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
@@ -165,7 +162,7 @@
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
-                alert("Error de conexión con AURAM: " + err.message);
+                alert("Error: " + err.message);
             }
         }
     </script>
