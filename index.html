@@ -84,7 +84,11 @@
         }
 
         function detenerAudio() {
-            if (audioActual) { audioActual.pause(); audioActual.currentTime = 0; }
+            if (audioActual) { 
+                audioActual.pause(); 
+                audioActual.currentTime = 0; 
+                audioActual = null;
+            }
         }
 
         window.addEventListener('visibilitychange', () => { if (document.hidden) detenerAudio(); });
@@ -122,18 +126,17 @@
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
-                // 1. AUDIO NEURAL
+                // 1. REPRODUCCIÓN DE AUDIO NEURAL (Voz Masculina de Google)
                 if (data.audio) {
                     detenerAudio();
                     audioActual = new Audio("data:audio/mp3;base64," + data.audio);
-                    audioActual.play().catch(e => console.error("Error audio:", e));
+                    audioActual.play().catch(e => console.error("Error al reproducir audio:", e));
                 }
 
                 let respuestaFinal = data.texto;
 
-                // 2. DETECTOR DE MINIATURA (Lógica del lunes restaurada)
-                // Buscamos PAGINA_REF o IMG_REF para mayor compatibilidad
-                const pagMatch = respuestaFinal.match(/(?:PAGINA_REF|IMG_REF):\s*(\d+)/i);
+                // 2. DETECTOR DE MINIATURA (Sincronizado con GitHub)
+                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
                 if (pagMatch && genMatch) {
@@ -141,20 +144,20 @@
                     const numRaw = pagMatch[1].trim();
                     const numFormateado = numRaw.padStart(3, '0');
                     
-                    // Ruta a GitHub con paréntesis (001).jpg
+                    // URL a GitHub con formato (001).jpg
                     const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
                     const cardHTML = `
                         <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA</p>
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">SELECCIÓN DEL CATÁLOGO</p>
                             <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
                         </div>
                     `;
                     respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
                 }
 
-                // Limpieza de etiquetas técnicas antes de mostrar
-                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|IMG_REF:.*|FOTO/gi, "");
+                // Limpiar etiquetas técnicas antes de mostrar en pantalla
+                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
 
                 document.getElementById('modal-loading').style.display = 'none';
                 document.getElementById('modal-result').style.display = 'flex';
