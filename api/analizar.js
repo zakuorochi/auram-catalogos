@@ -31,7 +31,14 @@ export default async function handler(req, res) {
                 role: 'user',
                 parts: [
                     { text: `Eres AURAM, asistente de moda. Analiza la foto para la ocasión: ${ocasion}. Usa el PDF de ${gen} adjunto.
-                    TAREA: Recomienda una prenda, menciona su precio y al final pon:
+                   TAREA:
+                   - Analiza visualmente la ropa y las caracteristicas fisicas del usuario y compárala con TODAS las imágenes disponibles en el catálogo de ${gen.toUpperCase()}.
+          - Selecciona la prenda que mejor complemente su estilo o sea la opción ideal para la ocasión.
+          - No te limites a un rango; busca el número de imagen (001.jpg, 002.jpg, etc.) que realmente corresponda a la mejor prenda.
+
+            REGLAS DE RESPUESTA:
+          - Escribe una recomendación cálida de máximo 60 palabras.
+          - Menciona el precio exacto que aparece en la imagen seleccionada.
                     GENERO_REF: ${gen}
                     PAGINA_REF: [número de página]
                     FOTO` },
