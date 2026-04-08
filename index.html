@@ -142,23 +142,28 @@
                 const pagMatch = respuestaFinal.match(/(?:PAGINA_REF|IMG_REF):\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                if (pagMatch && genMatch) {
-                    const gen = genMatch[1].toLowerCase().trim();
-                    const numRaw = pagMatch[1].trim();
-                    const numFormateado = numRaw.padStart(3, '0');
-                    
-                    // Ruta a GitHub con paréntesis (001).jpg
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
+              if (pagMatch && genMatch) {
+    const gen = genMatch[1].toLowerCase().trim();
+    const numRaw = parseInt(pagMatch[1].trim()); // Convertimos a número para operar
+    
+    // AJUSTE: Si la carátula es la página 1 del PDF, pero no está en tus JPG,
+    // restamos 1 para que la página 2 del PDF busque el archivo (001).jpg
+    // Si tus archivos coinciden exactamente con el número del PDF, deja el offset en 0.
+    const offset = 0; // Cambia a -1 o +1 según necesites
+    const numCorregido = (numRaw + offset).toString().padStart(3, '0');
+    
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numCorregido}).jpg`;
 
-                    const cardHTML = `
-                        <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA</p>
-                            <img src="${urlFoto}" class="thumb-img" onerror="this.parentElement.style.display='none'">
-                        </div>
-                    `;
-                    respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
-                }
+    console.log("Página PDF:", numRaw, "-> Buscando archivo:", `(${numCorregido}).jpg`);
 
+    const cardHTML = `
+        <div class="card-reco">
+            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA</p>
+            <img src="${urlFoto}" class="thumb-img" onerror="console.log('Error 404 en:', this.src); this.parentElement.style.display='none'">
+        </div>
+    `;
+    respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
+}
                 // Limpieza de etiquetas técnicas antes de mostrar
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|IMG_REF:.*|FOTO/gi, "");
 
