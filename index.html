@@ -119,16 +119,22 @@
                     body: JSON.stringify({ image: base64Img, ocasion: ocasion })
                 });
                 
+              // ... (Dentro de ejecutarIA después del fetch) ...
+
                 const data = await response.json();
                 if (data.isError) throw new Error(data.detalle);
 
-                // 1. AUDIO NEURAL
+                // 1. REPRODUCIR ÚNICAMENTE EL AUDIO DE GOOGLE CLOUD
                 if (data.audio) {
-                    detenerAudio();
+                    detenerAudio(); // Detiene cualquier audio anterior
                     audioActual = new Audio("data:audio/mp3;base64," + data.audio);
-                    audioActual.play().catch(e => console.error("Error audio:", e));
+                    audioActual.play().catch(e => console.error("Error al reproducir audio:", e));
                 }
 
+                // IMPORTANTE: Asegúrate de NO tener ninguna línea que diga 'window.speechSynthesis.speak'
+                // Si la ves, bórrala completamente.
+
+// ... (El resto del código se mantiene igual) ...
                 let respuestaFinal = data.texto;
 
                 // 2. DETECTOR DE MINIATURA (Lógica del lunes restaurada)
