@@ -17,8 +17,8 @@
         .grid-opts { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 300px; margin-top: 20px; }
         .btn-opt { padding: 20px; border-radius: 18px; border: 1px solid #222; background: #111; color: #fff; font-size: 1rem; }
         #res-body { width: 100%; font-size: 1.05rem; line-height: 1.7; color: #ddd; overflow-y: auto; text-align: left; }
-        .card-reco { margin-top: 25px; background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 15px; text-align: center; }
-        .thumb-img { width: 100%; max-width: 220px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .card-reco { margin-top: 25px; background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 15px; text-align: center; display: block !important; }
+        .thumb-img { width: 100%; max-width: 220px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: block; margin: 0 auto; }
         .loader { border: 3px solid #111; border-top: 3px solid #00d1ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-reload { margin-top: 25px; background: #fff; color: #000; padding: 15px 40px; border-radius: 30px; font-weight: bold; border: none; }
@@ -71,10 +71,7 @@
             "Buscando prendas que eleven tu aura hoy.",
             "La elegancia es la única belleza que nunca se desvanece.",
             "Analizando texturas para tu presencia única.",
-            "Tu confianza es tu mejor accesorio.",
-            "Diseñando el look que hable por ti.",
-            "Conectando con las tendencias que resaltan tu esencia.",
-            "Tu próximo nivel de estilo te espera."
+            "Tu confianza es tu mejor accesorio."
         ];
 
         function mostrarMensajeAleatorio() {
@@ -86,8 +83,6 @@
         function detenerAudio() {
             if (audioActual) { audioActual.pause(); audioActual.currentTime = 0; }
         }
-
-        window.addEventListener('visibilitychange', () => { if (document.hidden) detenerAudio(); });
 
         function iniciarApp() {
             if(appIniciada) return;
@@ -103,92 +98,75 @@
         function abrirMenu() { detenerAudio(); document.getElementById('modal-opt').style.display = 'flex'; }
         function cerrarModales() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
 
- // ... dentro de index.html, sustituye ejecutarIA completa ...
-
-async function ejecutarIA(ocasion) {
-    cerrarModales();
-    mostrarMensajeAleatorio();
-    document.getElementById('modal-loading').style.display = 'flex';
-    
-    // Captura de cámara
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth; 
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-
-    try {
-        const response = await fetch('/api/analizar', {
-            method: 'POST',
-            body: JSON.stringify({ image: base64Img, ocasion: ocasion })
-        });
-        
-        const data = await response.json();
-        if (data.isError) throw new Error(data.detalle);
-
-        // 1. REPRODUCIR AUDIO (Voz Masculina Google)
-        if (data.audio) {
-            console.log("AURAM: Reproduciendo audio neural...");
-            detenerAudio();
-            audioActual = new Audio("data:audio/mp3;base64," + data.audio);
-            audioActual.play().catch(e => console.error("Error audio:", e));
-        }
-
-        let respuestaFinal = data.texto;
-        console.log("AURAM: Texto crudo recibido:", respuestaFinal);
-
-        // 2. DETECTOR DE MINIATURA BLINDADO (Mejorado)
-        // Buscamos PAGINA_REF o Imagen/Página por compatibilidad
-        const pagMatch = respuestaFinal.match(/(?:PAGINA_REF|Imagen|Página):\s*(\d+)/i);
-        const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
-
-        if (pagMatch && genMatch) {
-            const gen = genMatch[1].toLowerCase().trim();
+        async function ejecutarIA(ocasion) {
+            cerrarModales();
+            mostrarMensajeAleatorio();
+            document.getElementById('modal-loading').style.display = 'flex';
             
-            // LIMPIEZA TOTAL: Nos aseguramos de extraer SOLO dígitos
-      const numRaw = parseInt(pagMatch[1]);
-const numFormateado = numRaw.toString().padStart(3, '0');
-            
-            // --- CONSTRUCCIÓN DE URL (EL PUNTO CRÍTICO) ---
-            // Asegúrate en GitHub de que tus fotos estén en /catalogos/hombre/(001).jpg
-            // Si están sueltas en /catalogos/ borra '${gen}/'
-          // --- RUTA CORREGIDA SEGÚN TU ESTRUCTURA ---
-const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
-console.log("Intentando cargar imagen desde:", urlFoto);
+            try {
+                const response = await fetch('/api/analizar', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: base64Img, ocasion: ocasion })
+                });
+                
+                const data = await response.json();
+                if (data.isError) throw new Error(data.detalle);
 
-            const cardHTML = `
-                <div class="card-reco">
-                    <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                    <img src="${urlFoto}" class="thumb-img" 
-                         onload="console.log('AURAM: Miniatura cargada con éxito!')"
-                         onerror="console.error('AURAM: Error 404 - Imagen no encontrada en GitHub:', this.src); this.parentElement.style.display='none'">
-                </div>
-            `;
-            
-            // Insertamos la tarjeta si existe la palabra FOTO, sino al final
-            if (respuestaFinal.includes("FOTO")) {
-                respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
-            } else {
-                respuestaFinal += cardHTML;
+                // 1. REPRODUCCIÓN DE AUDIO NEURAL
+                if (data.audio) {
+                    detenerAudio();
+                    audioActual = new Audio("data:audio/mp3;base64," + data.audio);
+                    audioActual.play().catch(e => console.error("Error audio:", e));
+                }
+
+                let respuestaFinal = data.texto;
+
+                // 2. DETECTOR DE MINIATURA (VERSIÓN BLINDADA)
+                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
+                const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
+
+                if (pagMatch && genMatch) {
+                    const gen = genMatch[1].toLowerCase().trim();
+                    const numLimpio = pagMatch[1].replace(/\D/g, ""); 
+                    const numFormateado = numLimpio.padStart(3, '0');
+                    
+                    // RUTA RAW VERIFICADA
+                    const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
+
+                    const cardHTML = `
+                        <div class="card-reco">
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+                            <img src="${urlFoto}" class="thumb-img" 
+                                 onload="console.log('Cargada:', this.src)"
+                                 onerror="console.error('Error 404:', this.src); this.src='https://via.placeholder.com/220x300/111/00d1ff?text=VERIFICAR+RUTA';">
+                        </div>
+                    `;
+                    
+                    if (respuestaFinal.includes("FOTO")) {
+                        respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
+                    } else {
+                        respuestaFinal += "<br>" + cardHTML;
+                    }
+                }
+
+                // 3. LIMPIEZA DE ETIQUETAS PARA PANTALLA
+                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
+
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = respuestaFinal;
+
+            } catch (err) {
+                document.getElementById('modal-loading').style.display = 'none';
+                alert("Error: " + err.message);
             }
-        } else {
-            console.warn("AURAM: No se detectó el bloque técnico para la imagen.");
         }
-
-        // 3. LIMPIEZA DE PANTALLA
-        // Borramos las etiquetas técnicas para que el usuario no las vea
-        respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|Imagen:.*|Página:.*|FOTO/gi, "");
-
-        document.getElementById('modal-loading').style.display = 'none';
-        document.getElementById('modal-result').style.display = 'flex';
-        document.getElementById('res-body').innerHTML = respuestaFinal;
-
-    } catch (err) {
-        document.getElementById('modal-loading').style.display = 'none';
-        alert("AURAM Error: " + err.message);
-    }
-}
     </script>
 </body>
+</html>
 </html>
