@@ -146,16 +146,16 @@ async function ejecutarIA(ocasion) {
             const gen = genMatch[1].toLowerCase().trim();
             
             // LIMPIEZA TOTAL: Nos aseguramos de extraer SOLO dígitos
-            const numRaw = parseInt(pagMatch[1]);
-            const numFormateado = numRaw.toString().padStart(3, '0');
+      const numRaw = parseInt(pagMatch[1]);
+const numFormateado = numRaw.toString().padStart(3, '0');
             
             // --- CONSTRUCCIÓN DE URL (EL PUNTO CRÍTICO) ---
             // Asegúrate en GitHub de que tus fotos estén en /catalogos/hombre/(001).jpg
             // Si están sueltas en /catalogos/ borra '${gen}/'
           // --- RUTA CORREGIDA SEGÚN TU ESTRUCTURA ---
 const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
-            
-            console.log("AURAM: Intentando cargar miniatura desde GitHub:", urlFoto);
+
+console.log("Intentando cargar imagen desde:", urlFoto);
 
             const cardHTML = `
                 <div class="card-reco">
