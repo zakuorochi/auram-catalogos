@@ -17,7 +17,19 @@
         .grid-opts { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 300px; margin-top: 20px; }
         .btn-opt { padding: 20px; border-radius: 18px; border: 1px solid #222; background: #111; color: #fff; font-size: 1rem; }
         #res-body { width: 100%; font-size: 1.05rem; line-height: 1.7; color: #ddd; overflow-y: auto; text-align: left; }
-        .card-reco { margin-top: 25px; background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 15px; text-align: center; display: block !important; }
+        .card-reco { 
+    margin-top: 25px; 
+    background: rgba(255,255,255,0.05); 
+    border: 1px solid #00d1ff; 
+    border-radius: 20px; 
+    padding: 15px; 
+    text-align: center; 
+    display: block !important;
+    position: relative; /* Asegura que respete el orden */
+    z-index: 300;       /* Por encima de todo */
+    pointer-events: auto !important; /* HABILITA CLICS */
+    min-height: 150px;  /* Evita que se vea vacío mientras carga */
+}
         .thumb-img { width: 100%; max-width: 220px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: block; margin: 0 auto; }
         .loader { border: 3px solid #111; border-top: 3px solid #00d1ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -136,16 +148,19 @@
                     const numFormateado = numLimpio.padStart(3, '0');
                     
                     // RUTA RAW VERIFICADA
-                    const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
+                   // ... (dentro del if de pagMatch)
+const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
 
-                    const cardHTML = `
-                        <div class="card-reco">
-                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" 
-                                 onload="console.log('Cargada:', this.src)"
-                                 onerror="console.error('Error 404:', this.src); this.src='https://via.placeholder.com/220x300/111/00d1ff?text=VERIFICAR+RUTA';">
-                        </div>
-                    `;
+const cardHTML = `
+    <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
+        <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px; pointer-events: none;">VISTA PREVIA DEL CATÁLOGO</p>
+        <img src="${urlFoto}" class="thumb-img" 
+             style="width: 100%; max-width: 220px; border-radius: 12px; display: block; margin: 0 auto; pointer-events: none;"
+             onload="console.log('Imagen cargada')"
+             onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO+IMAGEN...';">
+        <p style="font-size: 0.5rem; color: #444; margin-top: 10px; pointer-events: none;">Toca para ampliar</p>
+    </div>
+`;
                     
                     if (respuestaFinal.includes("FOTO")) {
                         respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
