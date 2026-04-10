@@ -15,30 +15,33 @@ export default async function handler(req, res) {
         const vertex_ai = new VertexAI({ project, location: 'us-central1', googleAuthOptions: { credentials } });
         const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
         
-        // VOLVEMOS AL MODELO ESTÁNDAR 2.5 FLASH
-        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // --- USANDO ESTRICTAMENTE 2.5-FLASH-LITE ---
+        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-        // 1. Identificar Género
+        // 1. Detección de género rápida
         const resGen = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: "Responde solo 'hombre' o 'mujer'." }, { inlineData: { mimeType: 'image/jpeg', data: image } }] }]
         });
         const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
         const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
-        // 2. PROMPT REFORZADO: Obligamos a que ponga los datos técnicos al final
+        // 2. Prompt Optimizado para Estilo y Vínculo de Imagen
         const promptFinal = {
             contents: [{
                 role: 'user',
                 parts: [
-                    { text: `Eres AURAM, asistente de moda de lujo. El usuario quiere un look para: ${ocasion}. 
-                    Analiza su foto y busca la prenda ideal en el PDF adjunto de ${gen.toUpperCase()}.
+                    { text: `Eres AURAM, un asistente de moda de lujo con lenguaje sofisticado y cálido. 
+                    Analiza la imagen del usuario para la ocasión: ${ocasion}. 
+                    Busca en el catálogo de ${gen.toUpperCase()} (PDF adjunto) la prenda perfecta.
 
-                    REGLAS DE ORO:
-                    1. Escribe una recomendación sofisticada (máx. 60 palabras). No menciones códigos de archivos en este texto.
-                    2. Al final de tu respuesta, añade EXACTAMENTE este formato para que el sistema funcione:
-
+                    INSTRUCCIONES DE RESPUESTA:
+                    - Redacta una recomendación de estilo elegante (máximo 60 palabras).
+                    - Indica el precio exacto del catálogo.
+                    - CRÍTICO: No menciones nombres de archivos o números de página en la recomendación hablada.
+                    
+                    ESTRUCTURA TÉCNICA OBLIGATORIA AL FINAL:
                     GENERO_REF: ${gen}
-                    PAGINA_REF: [Aquí el número de página donde viste la prenda]
+                    PAGINA_REF: [número de página del PDF]
                     FOTO` },
                     { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
                     { inlineData: { mimeType: 'image/jpeg', data: image } }
@@ -49,35 +52,36 @@ export default async function handler(req, res) {
         const result = await model.generateContent(promptFinal);
         const textoIA = result.response.candidates[0].content.parts[0].text;
 
-        // 3. Ajuste de Offset y Limpieza
-        let textoFinalParaFrontend = textoIA;
+        // 3. Procesamiento de datos para el Frontend
+        let textoFinal = textoIA;
         const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
         
         if (pagMatch) {
             const numPdf = parseInt(pagMatch[1]);
-            // Ajustamos el offset: si la página 2 del PDF es tu (001).jpg, el offset es -1
-            const offset = -1; 
-            const numCorregido = numPdf + offset;
-            textoFinalParaFrontend = textoFinalParaFrontend.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numCorregido}`);
+            // Ajuste de carátula: Si pág 2 del PDF = (001).jpg, usamos offset -1
+            const numCorregido = numPdf - 1; 
+            textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numCorregido}`);
         }
 
-        // Limpiamos etiquetas para que la voz no las lea
+        // 4. Voz Masculina (Limpiando etiquetas técnicas)
         const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
-
-        // 4. Voz Neural Masculina
         const [responseTTS] = await ttsClient.synthesizeSpeech({
             input: { text: textoParaVoz },
-            voice: { languageCode: 'es-ES', name: 'es-ES-Wavenet-B', ssmlGender: 'MALE' },
+            voice: { 
+                languageCode: 'es-ES', 
+                name: 'es-ES-Wavenet-B', 
+                ssmlGender: 'MALE' 
+            },
             audioConfig: { audioEncoding: 'MP3' },
         });
 
         res.status(200).json({ 
-            texto: textoFinalParaFrontend, 
+            texto: textoFinal, 
             audio: responseTTS.audioContent.toString('base64') 
         });
 
     } catch (err) {
-        console.error("Error en AURAM 2.5:", err.message);
+        console.error("Error en AURAM 2.5 Lite:", err.message);
         res.status(200).json({ isError: true, detalle: err.message });
     }
 }
