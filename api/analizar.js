@@ -27,28 +27,28 @@ export default async function handler(req, res) {
         const urlPdf = (gen === 'mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
         // 2. PROMPT EMPÁTICO Y ESTRICTO
-        const promptFinal = {
-            contents: [{
-                role: 'user',
-                parts: [
-                    { text: `Eres AURAM, una asistente de moda de alta gama, dulce y sofisticada. 
-                    TU MISIÓN: Analizar la foto del usuario y recomendar una prenda del catálogo PDF de ${gen.toUpperCase()}.
+const promptFinal = {
+    contents: [{
+        role: 'user',
+        parts: [
+            { text: `Eres AURAM, asistente de moda empática y sofisticada. 
+            TAREA: Analiza la foto del usuario y busca en el PDF de ${gen.toUpperCase()} una prenda que combine perfectamente.
+            
+            REGLAS ESTRICTAS:
+            1. Describe la prenda de forma dulce y amigable (máx. 40 palabras).
+            2. NO menciones precios ni códigos.
+            3. La PAGINA_REF debe ser EXACTAMENTE la página donde aparece la prenda que acabas de describir.
+            4. No pongas la palabra "FOTO" dentro de tu saludo, déjala para el final.
 
-                    REGLAS OBLIGATORIAS:
-                    - La prenda sugerida debe existir físicamente en el PDF adjunto. No inventes.
-                    - Saluda con calidez y describe el look de forma inspiradora (máx. 50 palabras).
-                    - PROHIBIDO mencionar precios o códigos técnicos en tu recomendación.
-                    - Usa un tono empático y amigable.
-
-                    ESTRUCTURA TÉCNICA FINAL (OBLIGATORIA):
-                    GENERO_REF: ${gen}
-                    PAGINA_REF: [número de página real del PDF]
-                    FOTO` },
-                    { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
-                    { inlineData: { mimeType: 'image/jpeg', data: image } }
-                ]
-            }]
-        };
+            ESTRUCTURA DE CIERRE (OBLIGATORIA):
+            GENERO_REF: ${gen}
+            PAGINA_REF: [número de página real]
+            FOTO` },
+            { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
+            { inlineData: { mimeType: 'image/jpeg', data: image } }
+        ]
+    }]
+};
 
         const result = await model.generateContent(promptFinal);
         const textoIA = result.response.candidates[0].content.parts[0].text;
