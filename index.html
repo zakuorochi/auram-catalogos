@@ -142,41 +142,34 @@
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                if (pagMatch && genMatch) {
-                    const gen = genMatch[1].toLowerCase().trim();
-                    const numLimpio = pagMatch[1].replace(/\D/g, ""); 
-                    const numFormateado = numLimpio.padStart(3, '0');
-                    
-                    // RUTA RAW VERIFICADA
-                   // ... (dentro del if de pagMatch)
-const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/master/catalogos/" + gen + "/(" + numFormateado + ").jpg";
+  if (pagMatch && genMatch) {
+    const gen = genMatch[1].toLowerCase().trim();
+    
+    // Tomamos el número tal cual viene del backend
+    const numSoloCifras = pagMatch[1].replace(/\D/g, "");
+    const numFormateado = numSoloCifras.padStart(3, '0');
+    
+    // Construimos la URL 1:1
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
-const cardHTML = `
-    <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
-        <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px; pointer-events: none;">VISTA PREVIA DEL CATÁLOGO</p>
-        <img src="${urlFoto}" class="thumb-img" 
-             style="width: 100%; max-width: 220px; border-radius: 12px; display: block; margin: 0 auto; pointer-events: none;"
-             onload="console.log('Imagen cargada')"
-             onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO+IMAGEN...';">
-        <p style="font-size: 0.5rem; color: #444; margin-top: 10px; pointer-events: none;">Toca para ampliar</p>
-    </div>
-`;
-                    
-                    if (respuestaFinal.includes("FOTO")) {
-                        respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
-                    } else {
-                        respuestaFinal += "<br>" + cardHTML;
-                    }
-                }
+    console.log("AURAM: Buscando coincidencia exacta ->", urlFoto);
 
-                // 3. LIMPIEZA DE ETIQUETAS PARA PANTALLA
-                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
-
-                document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = respuestaFinal;
-
-            } catch (err) {
+    const cardHTML = `
+        <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')" style="cursor:pointer; pointer-events: auto !important;">
+            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px; pointer-events: none;">VISTA PREVIA DEL CATÁLOGO</p>
+            <img src="${urlFoto}" class="thumb-img" 
+                 style="width: 100%; max-width: 220px; border-radius: 12px; display: block; margin: 0 auto; pointer-events: none;"
+                 onload="console.log('¡Imagen encontrada y cargada!')"
+                 onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO+EN+CATÁLOGO...';">
+            <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px; pointer-events: none;">Toca para ampliar</p>
+        </div>
+    `;
+    
+    // Insertar en el cuerpo de la respuesta
+    respuestaFinal = respuestaFinal.includes("FOTO") ? 
+                     respuestaFinal.replace(/FOTO/g, cardHTML) : 
+                     respuestaFinal + "<br>" + cardHTML;
+}catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
                 alert("Error: " + err.message);
             }
