@@ -92,8 +92,10 @@
 
         async function ejecutarIA(ocasion) {
             cerrarModales();
+            
             const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
             document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
+            
             document.getElementById('modal-loading').style.display = 'flex';
             
             const canvas = document.createElement('canvas');
@@ -116,7 +118,6 @@
                     audioActual.play().catch(e => console.error("Error audio:", e));
                 }
 
-                // VARIABLE CORRECTA: respuestaFinal
                 let respuestaFinal = data.texto;
 
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
@@ -143,7 +144,7 @@
                     }
                 }
 
-                // Aquí estaba el error: usábamos textoParaVoz en vez de respuestaFinal
+                // FIX DEL ERROR: Usar respuestaFinal en lugar de textoParaVoz
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
                 
                 document.getElementById('modal-loading').style.display = 'none';
