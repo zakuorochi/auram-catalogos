@@ -65,6 +65,8 @@ if (pagMatch) {
 }
         // 4. Voz Masculina (Limpiando etiquetas técnicas)
 // // 4. Voz Femenina (Sustituye todo tu bloque 4 por este)
+const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
+
 const [responseTTS] = await ttsClient.synthesizeSpeech({
     input: { text: textoParaVoz },
     voice: { 
@@ -72,11 +74,12 @@ const [responseTTS] = await ttsClient.synthesizeSpeech({
         name: 'es-ES-Wavenet-E', 
         ssmlGender: 'FEMALE' 
     },
-    audioConfig: { 
-        audioEncoding: 'MP3',
-        pitch: 0,
-        speakingRate: 1.0
-    },
+    audioConfig: { audioEncoding: 'MP3' },
+});
+
+res.status(200).json({ 
+    texto: textoFinal, 
+    audio: responseTTS.audioContent.toString('base64') 
 });
 
 res.status(200).json({ 
