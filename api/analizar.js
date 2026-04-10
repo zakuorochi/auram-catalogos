@@ -65,20 +65,20 @@ if (pagMatch) {
 }
         // 4. Voz Masculina (Limpiando etiquetas técnicas)
         const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
-        const [responseTTS] = await ttsClient.synthesizeSpeech({
-            input: { text: textoParaVoz },
-            voice: { 
-              languageCode: 'es-ES', 
+   const [responseTTS] = await ttsClient.synthesizeSpeech({
+    input: { text: textoParaVoz },
+    voice: { 
+        languageCode: 'es-ES', 
         name: 'es-ES-Wavenet-E', 
-        ssmlGender: 'FEMALE'
-            },
-            audioConfig: { audioEncoding: 'MP3' },
-        });
+        ssmlGender: 'FEMALE' 
+    },
+    audioConfig: { audioEncoding: 'MP3' },
+});
 
-        res.status(200).json({ 
-            texto: textoFinal, 
-            audio: responseTTS.audioContent.toString('base64') 
-        });
+res.status(200).json({ 
+    texto: textoFinal, 
+    audio: responseTTS.audioContent.toString('base64') 
+});
 
     } catch (err) {
         console.error("Error en AURAM 2.5 Lite:", err.message);
