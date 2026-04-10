@@ -53,16 +53,16 @@ export default async function handler(req, res) {
         const textoIA = result.response.candidates[0].content.parts[0].text;
 
         // 3. Procesamiento de datos para el Frontend
-        let textoFinal = textoIA;
-        const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
-        
-        if (pagMatch) {
-            const numPdf = parseInt(pagMatch[1]);
-            // Ajuste de carátula: Si pág 2 del PDF = (001).jpg, usamos offset -1
-            const numCorregido = numPdf - 1; 
-            textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numCorregido}`);
-        }
+     // ... dentro de api/analizar.js ...
 
+let textoFinal = textoIA;
+const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
+
+if (pagMatch) {
+    // YA NO RESTAMOS NADA. Si la IA dice 98, mandamos 98.
+    const numPdf = pagMatch[1].replace(/\D/g, ""); 
+    textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numPdf}`);
+}
         // 4. Voz Masculina (Limpiando etiquetas técnicas)
         const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
         const [responseTTS] = await ttsClient.synthesizeSpeech({
