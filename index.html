@@ -14,9 +14,12 @@
         .ui { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: center; z-index: 100; }
         .btn-magic { width: 75px; height: 75px; border-radius: 50%; border: none; background: linear-gradient(135deg, #00d1ff, #0072ff); font-size: 2rem; color: #fff; box-shadow: 0 0 25px rgba(0,209,255,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); display: none; flex-direction: column; align-items: center; z-index: 200; padding: 25px; padding-top: 60px; text-align: center; }
+        
+        /* Estilos Vaki */
         .vaki-card { background: rgba(255,255,255,0.05); border: 1px solid #00d1ff; border-radius: 20px; padding: 20px; margin-top: 20px; width: 90%; max-width: 350px; }
         .date-box { color: #00d1ff; font-size: 0.8rem; margin: 15px 0; letter-spacing: 1px; }
         .btn-vaki { background: #ff4500; color: #fff; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 15px; box-shadow: 0 0 15px rgba(255,69,0,0.4); }
+        
         .grid-opts { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-width: 300px; margin-top: 20px; }
         .btn-opt { padding: 20px; border-radius: 18px; border: 1px solid #222; background: #111; color: #fff; font-size: 1rem; cursor: pointer; }
         #res-body { width: 100%; font-size: 1.05rem; line-height: 1.7; color: #ddd; overflow-y: auto; text-align: left; }
@@ -118,8 +121,7 @@
             
             try {
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth; 
-                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
                 const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
@@ -139,35 +141,33 @@
 
                 let respuestaFinal = data.texto;
 
-// 1. Extraer datos técnicos
-const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
-const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
+                // --- PROCESAMIENTO DE IMAGEN (BASADO EN EL INDEX QUE SÍ FUNCIONÓ) ---
+                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
+                const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-// 2. Limpiar TODO el texto de etiquetas técnicas PRIMERO
-respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "").trim();
+                if (pagMatch && genMatch) {
+                    const gen = genMatch[1].toLowerCase().trim();
+                    const numLimpio = pagMatch[1].replace(/\D/g, "");
+                    const numFormateado = numLimpio.padStart(3, '0');
+                    const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
 
-// 3. Si hay coincidencia, fabricar la tarjeta y PEGARLA AL FINAL
-if (pagMatch && genMatch) {
-    const gen = genMatch[1].toLowerCase().trim();
-    const numLimpio = pagMatch[1].replace(/\D/g, "");
-    const numFormateado = numLimpio.padStart(3, '0');
-    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
-
-    const cardHTML = `
-        <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')" style="margin-top: 20px;">
-            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
-            <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
-        </div>`;
-    
-    // Forzamos que aparezca DEBAJO del texto
-    respuestaFinal = respuestaFinal + "<br>" + cardHTML;
-}
-
-// 4. Mostrar en pantalla
-document.getElementById('modal-loading').style.display = 'none';
-document.getElementById('modal-result').style.display = 'flex';
-document.getElementById('res-body').innerHTML = respuestaFinal;
+                    const cardHTML = `
+                        <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
+                            <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
+                        </div>`;
+                    
+                    // Aseguramos que se ponga al final de la respuesta
+                    respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "").trim();
+                    respuestaFinal = respuestaFinal + "<br>" + cardHTML;
+                } else {
+                    respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "").trim();
+                }
+                
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = respuestaFinal;
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
