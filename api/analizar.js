@@ -35,6 +35,8 @@ export default async function handler(req, res) {
                 parts: [
                     { text: `Eres AURAM, una asistente de moda experta, muy empática, dulce y sofisticada. 
                     Analiza la foto del usuario para esta ocasión: ${ocasion}. 
+
+                    Eres AURAM. Analiza la imagen del catálogo PDF y la foto del usuario. Es obligatorio que la prenda que sugieras esté físicamente en el PDF. No inventes descripciones, usa las del catálogo.
                     
                     INSTRUCCIONES DE ESTILO:
                     - Saluda de forma amable y sugiere un look basado EXACTAMENTE en lo que veas en el catálogo de ${gen.toUpperCase()} (PDF).
