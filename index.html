@@ -22,7 +22,7 @@
         .loader { border: 3px solid #111; border-top: 3px solid #00d1ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-reload { margin-top: 25px; background: #fff; color: #000; padding: 15px 40px; border-radius: 30px; font-weight: bold; border: none; cursor: pointer; }
-        #loading-msg { color: #00d1ff; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; }
+        #loading-msg { color: #00d1ff; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; line-height: 1.6; }
     </style>
 </head>
 <body onclick="iniciarApp()">
@@ -66,6 +66,15 @@
         let appIniciada = false;
         let audioActual = null;
 
+        // --- CONSTANTE DE FRASES MOTIVACIONALES ---
+        const frasesMotivacionales = [
+            "Tu estilo es la firma de tu personalidad.",
+            "Buscando prendas que eleven tu aura hoy.",
+            "La elegancia es la única belleza que nunca se desvanece.",
+            "Analizando texturas para tu presencia única.",
+            "Tu confianza es tu mejor accesorio."
+        ];
+
         function detenerAudio() { if (audioActual) { audioActual.pause(); audioActual.currentTime = 0; } }
 
         function iniciarApp() {
@@ -84,7 +93,11 @@
 
         async function ejecutarIA(ocasion) {
             cerrarModales();
-            document.getElementById('loading-msg').innerText = "Analizando tu estilo...";
+            
+            // --- INYECCIÓN DE FRASES ALEATORIAS ---
+            const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
+            document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
+            
             document.getElementById('modal-loading').style.display = 'flex';
             
             const canvas = document.createElement('canvas');
@@ -109,26 +122,29 @@
 
                 let respuestaFinal = data.texto;
 
-                // --- DETECCIÓN DE IMAGEN 1:1 (SIN OFFSET) ---
+                // --- DETECCIÓN DE IMAGEN 1:1 ---
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
                 if (pagMatch && genMatch) {
                     const gen = genMatch[1].toLowerCase().trim();
-                    const numFormateado = pagMatch[1].replace(/\D/g, "").padStart(3, '0');
+                    const numLimpio = pagMatch[1].replace(/\D/g, "");
+                    const numFormateado = numLimpio.padStart(3, '0');
                     const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
 
                     const cardHTML = `
                         <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
                             <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO...';">
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
                             <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
                         </div>
                     `;
                     
-                    respuestaFinal = respuestaFinal.includes("FOTO") ? 
-                                     respuestaFinal.replace(/FOTO/g, cardHTML) : 
-                                     respuestaFinal + "<br>" + cardHTML;
+                    if (respuestaFinal.includes("FOTO")) {
+                        respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
+                    } else {
+                        respuestaFinal += "<br>" + cardHTML;
+                    }
                 }
 
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
