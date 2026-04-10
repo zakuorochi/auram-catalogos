@@ -15,8 +15,8 @@ export default async function handler(req, res) {
         const vertex_ai = new VertexAI({ project, location: 'us-central1', googleAuthOptions: { credentials } });
         const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
         
-        // --- CAMBIO AL MODELO PARA PRUEBA: 2.5-FLASH-LITE ---
-        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        // VOLVEMOS AL MODELO ESTÁNDAR 2.5 FLASH
+        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         // 1. Identificar Género
         const resGen = await model.generateContent({
@@ -25,22 +25,20 @@ export default async function handler(req, res) {
         const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
         const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
-        // 2. Prompt (Lógica base funcional)
+        // 2. PROMPT REFORZADO: Obligamos a que ponga los datos técnicos al final
         const promptFinal = {
             contents: [{
                 role: 'user',
                 parts: [
-                    { text: `Eres AURAM, asistente de moda. Analiza la foto para la ocasión: ${ocasion}. Usa el PDF de ${gen} adjunto.
-                    TAREA:
-                    - Analiza visualmente la ropa y las caracteristicas fisicas del usuario y compárala con TODAS las imágenes disponibles en el catálogo de ${gen.toUpperCase()}.
-                    - Selecciona la prenda que mejor complemente su estilo o sea la opción ideal para la ocasión.
-                    - No te limites a un rango; busca el número de imagen (001.jpg, 002.jpg, etc.) que realmente corresponda a la mejor prenda.
+                    { text: `Eres AURAM, asistente de moda de lujo. El usuario quiere un look para: ${ocasion}. 
+                    Analiza su foto y busca la prenda ideal en el PDF adjunto de ${gen.toUpperCase()}.
 
-                    REGLAS DE RESPUESTA:
-                    - Escribe una recomendación cálida de máximo 60 palabras.
-                    - Menciona el precio exacto que aparece en la imagen seleccionada.
+                    REGLAS DE ORO:
+                    1. Escribe una recomendación sofisticada (máx. 60 palabras). No menciones códigos de archivos en este texto.
+                    2. Al final de tu respuesta, añade EXACTAMENTE este formato para que el sistema funcione:
+
                     GENERO_REF: ${gen}
-                    PAGINA_REF: [número de página]
+                    PAGINA_REF: [Aquí el número de página donde viste la prenda]
                     FOTO` },
                     { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
                     { inlineData: { mimeType: 'image/jpeg', data: image } }
@@ -51,17 +49,19 @@ export default async function handler(req, res) {
         const result = await model.generateContent(promptFinal);
         const textoIA = result.response.candidates[0].content.parts[0].text;
 
-        // 3. Ajuste de Offset y Limpieza para la Voz
+        // 3. Ajuste de Offset y Limpieza
         let textoFinalParaFrontend = textoIA;
         const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
         
         if (pagMatch) {
             const numPdf = parseInt(pagMatch[1]);
+            // Ajustamos el offset: si la página 2 del PDF es tu (001).jpg, el offset es -1
             const offset = -1; 
             const numCorregido = numPdf + offset;
             textoFinalParaFrontend = textoFinalParaFrontend.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numCorregido}`);
         }
 
+        // Limpiamos etiquetas para que la voz no las lea
         const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
 
         // 4. Voz Neural Masculina
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
         });
 
     } catch (err) {
-        console.error("Error en Prueba Lite:", err.message);
+        console.error("Error en AURAM 2.5:", err.message);
         res.status(200).json({ isError: true, detalle: err.message });
     }
 }
