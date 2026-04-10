@@ -66,7 +66,6 @@
         let appIniciada = false;
         let audioActual = null;
 
-        // --- CONSTANTE DE FRASES MOTIVACIONALES ---
         const frasesMotivacionales = [
             "Tu estilo es la firma de tu personalidad.",
             "Buscando prendas que eleven tu aura hoy.",
@@ -93,11 +92,8 @@
 
         async function ejecutarIA(ocasion) {
             cerrarModales();
-            
-            // --- INYECCIÓN DE FRASES ALEATORIAS ---
             const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
             document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
-            
             document.getElementById('modal-loading').style.display = 'flex';
             
             const canvas = document.createElement('canvas');
@@ -120,9 +116,9 @@
                     audioActual.play().catch(e => console.error("Error audio:", e));
                 }
 
+                // VARIABLE CORRECTA: respuestaFinal
                 let respuestaFinal = data.texto;
 
-                // --- DETECCIÓN DE IMAGEN 1:1 ---
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
@@ -135,7 +131,7 @@
                     const cardHTML = `
                         <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
                             <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO...';">
                             <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
                         </div>
                     `;
@@ -147,6 +143,7 @@
                     }
                 }
 
+                // Aquí estaba el error: usábamos textoParaVoz en vez de respuestaFinal
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
                 
                 document.getElementById('modal-loading').style.display = 'none';
