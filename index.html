@@ -90,55 +90,65 @@
         function abrirMenu() { detenerAudio(); document.getElementById('modal-opt').style.display = 'flex'; }
         function cerrarModales() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
 
-       async function ejecutarIA(ocasion) {
-    cerrarModales();
-    
-    // Frases motivacionales aleatorias
-    const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
-    document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
-    
-    document.getElementById('modal-loading').style.display = 'flex';
-    
-    // ... captura de cámara y fetch ...
+        async function ejecutarIA(ocasion) {
+            cerrarModales();
+            
+            const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
+            document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
+            document.getElementById('modal-loading').style.display = 'flex';
+            
+            try {
+                // --- SECCIÓN RECUPERADA: CAPTURA Y FETCH ---
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const base64Img = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
-    const data = await response.json();
-    if (data.isError) throw new Error(data.detalle);
+                const response = await fetch('/api/analizar', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: base64Img, ocasion: ocasion })
+                });
+                
+                const data = await response.json();
+                if (data.isError) throw new Error(data.detalle);
 
-    if (data.audio) {
-        detenerAudio();
-        audioActual = new Audio("data:audio/mp3;base64," + data.audio);
-        audioActual.play();
-    }
+                if (data.audio) {
+                    detenerAudio();
+                    audioActual = new Audio("data:audio/mp3;base64," + data.audio);
+                    audioActual.play();
+                }
 
-    let respuestaFinal = data.texto; // Usamos esta variable para todo el frontend
+                let respuestaFinal = data.texto; 
 
-    // Detección de Miniatura
-    const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
-    const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
+                // --- DETECCIÓN DE MINIATURA ---
+                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
+                const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-    if (pagMatch && genMatch) {
-        const gen = genMatch[1].toLowerCase().trim();
-        const numFormateado = pagMatch[1].replace(/\D/g, "").padStart(3, '0');
-        const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
+                if (pagMatch && genMatch) {
+                    const gen = genMatch[1].toLowerCase().trim();
+                    const numFormateado = pagMatch[1].replace(/\D/g, "").padStart(3, '0');
+                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
-        const cardHTML = `
-            <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
-                <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
-            </div>
-        `;
-        
-        respuestaFinal = respuestaFinal.includes("FOTO") ? 
-                         respuestaFinal.replace(/FOTO/g, cardHTML) : 
-                         respuestaFinal + "<br>" + cardHTML;
-    }
+                    const cardHTML = `
+                        <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
+                            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
+                            <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
+                        </div>
+                    `;
+                    
+                    respuestaFinal = respuestaFinal.includes("FOTO") ? 
+                                     respuestaFinal.replace(/FOTO/g, cardHTML) : 
+                                     respuestaFinal + "<br>" + cardHTML;
+                }
 
-    // LIMPIEZA FINAL (Aquí estaba el error, ahora usamos respuestaFinal)
-    respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
-    
-    document.getElementById('modal-loading').style.display = 'none';
-    document.getElementById('modal-result').style.display = 'flex';
-    document.getElementById('res-body').innerHTML = respuestaFinal;
+                // --- LIMPIEZA Y CIERRE ---
+                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
+                
+                document.getElementById('modal-loading').style.display = 'none';
+                document.getElementById('modal-result').style.display = 'flex';
+                document.getElementById('res-body').innerHTML = respuestaFinal;
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
