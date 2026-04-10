@@ -98,7 +98,6 @@
             document.getElementById('modal-loading').style.display = 'flex';
             
             try {
-                // --- SECCIÓN RECUPERADA: CAPTURA Y FETCH ---
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth; 
                 canvas.height = video.videoHeight;
@@ -119,31 +118,32 @@
                     audioActual.play();
                 }
 
-                let respuestaFinal = data.texto; 
+                let respuestaFinal = data.texto;
 
-                // --- DETECCIÓN DE MINIATURA ---
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
                 if (pagMatch && genMatch) {
                     const gen = genMatch[1].toLowerCase().trim();
-                    const numFormateado = pagMatch[1].replace(/\D/g, "").padStart(3, '0');
-                    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
+                    const numLimpio = pagMatch[1].replace(/\D/g, "");
+                    const numFormateado = numLimpio.padStart(3, '0');
+                    const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
 
                     const cardHTML = `
                         <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')">
                             <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
-                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
+                            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO...';">
                             <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
                         </div>
                     `;
                     
-                    respuestaFinal = respuestaFinal.includes("FOTO") ? 
-                                     respuestaFinal.replace(/FOTO/g, cardHTML) : 
-                                     respuestaFinal + "<br>" + cardHTML;
+                    if (respuestaFinal.includes("FOTO")) {
+                        respuestaFinal = respuestaFinal.replace(/FOTO/g, cardHTML);
+                    } else {
+                        respuestaFinal += "<br>" + cardHTML;
+                    }
                 }
 
-                // --- LIMPIEZA Y CIERRE ---
                 respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
                 
                 document.getElementById('modal-loading').style.display = 'none';
