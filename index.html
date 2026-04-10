@@ -139,28 +139,35 @@
 
                 let respuestaFinal = data.texto;
 
-                const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
-                const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
+// 1. Extraer datos técnicos
+const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
+const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
-                if (pagMatch && genMatch) {
-                    const gen = genMatch[1].toLowerCase().trim();
-                    const numLimpio = pagMatch[1].replace(/\D/g, "");
-                    const numFormateado = numLimpio.padStart(3, '0');
-                    const urlFoto = "https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/" + gen + "/(" + numFormateado + ").jpg";
+// 2. Limpiar TODO el texto de etiquetas técnicas PRIMERO
+respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "").trim();
 
-                    const cardHTML = `<div class="card-reco" onclick="window.open('${urlFoto}', '_blank')"><p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p><img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=CARGANDO...';"><p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p></div>`;
-                    
-                    if (/FOTO/gi.test(respuestaFinal)) {
-                        respuestaFinal = respuestaFinal.replace(/FOTO/gi, cardHTML);
-                    } else {
-                        respuestaFinal += "<br>" + cardHTML;
-                    }
-                }
+// 3. Si hay coincidencia, fabricar la tarjeta y PEGARLA AL FINAL
+if (pagMatch && genMatch) {
+    const gen = genMatch[1].toLowerCase().trim();
+    const numLimpio = pagMatch[1].replace(/\D/g, "");
+    const numFormateado = numLimpio.padStart(3, '0');
+    const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
 
-                respuestaFinal = respuestaFinal.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
-                document.getElementById('modal-loading').style.display = 'none';
-                document.getElementById('modal-result').style.display = 'flex';
-                document.getElementById('res-body').innerHTML = respuestaFinal;
+    const cardHTML = `
+        <div class="card-reco" onclick="window.open('${urlFoto}', '_blank')" style="margin-top: 20px;">
+            <p style="font-size: 0.6rem; color: #00d1ff; letter-spacing: 3px; margin-bottom: 10px;">VISTA PREVIA DEL CATÁLOGO</p>
+            <img src="${urlFoto}" class="thumb-img" onerror="this.src='https://via.placeholder.com/220x300/111/00d1ff?text=BUSCANDO...';">
+            <p style="font-size: 0.5rem; color: #00d1ff; margin-top: 10px;">Toca para ampliar</p>
+        </div>`;
+    
+    // Forzamos que aparezca DEBAJO del texto
+    respuestaFinal = respuestaFinal + "<br>" + cardHTML;
+}
+
+// 4. Mostrar en pantalla
+document.getElementById('modal-loading').style.display = 'none';
+document.getElementById('modal-result').style.display = 'flex';
+document.getElementById('res-body').innerHTML = respuestaFinal;
 
             } catch (err) {
                 document.getElementById('modal-loading').style.display = 'none';
