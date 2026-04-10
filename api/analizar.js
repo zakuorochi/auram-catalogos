@@ -26,22 +26,25 @@ export default async function handler(req, res) {
         const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
         // 2. Prompt Optimizado para Estilo y Vínculo de Imagen
+    // ... dentro de api/analizar.js ...
+
+        // 2. PROMPT EMPÁTICO Y SIN PRECIOS
         const promptFinal = {
             contents: [{
                 role: 'user',
                 parts: [
-                    { text: `Eres AURAM, un asistente de moda de lujo con lenguaje sofisticado y cálido. 
-                    Analiza la imagen del usuario para la ocasión: ${ocasion}. 
-                    Busca en el catálogo de ${gen.toUpperCase()} (PDF adjunto) la prenda perfecta.
-
-                    INSTRUCCIONES DE RESPUESTA:
-                    - Redacta una recomendación de estilo elegante (máximo 60 palabras).
-                    - Indica el precio exacto del catálogo.
-                    - CRÍTICO: No menciones nombres de archivos o números de página en la recomendación hablada.
+                    { text: `Eres AURAM, una asistente de moda experta, muy empática, dulce y sofisticada. 
+                    Analiza la foto del usuario para esta ocasión: ${ocasion}. 
                     
-                    ESTRUCTURA TÉCNICA OBLIGATORIA AL FINAL:
+                    INSTRUCCIONES DE ESTILO:
+                    - Saluda de forma amable y sugiere un look basado EXACTAMENTE en lo que veas en el catálogo de ${gen.toUpperCase()} (PDF).
+                    - NO menciones precios, NO menciones códigos de producto.
+                    - Tu lenguaje debe ser inspirador (máx. 50 palabras).
+                    
+                    IMPORTANTE (SOLO PARA EL SISTEMA):
+                    Al final de tu respuesta, añade estrictamente esto:
                     GENERO_REF: ${gen}
-                    PAGINA_REF: [número de página del PDF]
+                    PAGINA_REF: [número de página donde está la prenda que recomendaste]
                     FOTO` },
                     { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
                     { inlineData: { mimeType: 'image/jpeg', data: image } }
@@ -52,35 +55,33 @@ export default async function handler(req, res) {
         const result = await model.generateContent(promptFinal);
         const textoIA = result.response.candidates[0].content.parts[0].text;
 
-        // 3. Procesamiento de datos para el Frontend
-     // ... dentro de api/analizar.js ...
+        // 3. Procesamiento para el Frontend (Sincronizado 1:1)
+        let textoFinal = textoIA;
+        const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
+        if (pagMatch) {
+            const numPdf = pagMatch[1].replace(/\D/g, ""); 
+            textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numPdf}`);
+        }
 
-let textoFinal = textoIA;
-const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
+        // 4. VOZ FEMENINA CORREGIDA (Sin el error de variable)
+        const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
+        
+        const [responseTTS] = await ttsClient.synthesizeSpeech({
+            input: { text: textoParaVoz },
+            voice: { 
+                languageCode: 'es-ES', 
+                name: 'es-ES-Wavenet-E', // Voz femenina sofisticada
+                ssmlGender: 'FEMALE' 
+            },
+            audioConfig: { audioEncoding: 'MP3' },
+        });
 
-if (pagMatch) {
-    // YA NO RESTAMOS NADA. Si la IA dice 98, mandamos 98.
-    const numPdf = pagMatch[1].replace(/\D/g, ""); 
-    textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numPdf}`);
-}
-        // 4. Voz Masculina (Limpiando etiquetas técnicas)
-// // 4. Voz Femenina (Sustituye todo tu bloque 4 por este)
-const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
+        res.status(200).json({ 
+            texto: textoFinal, 
+            audio: responseTTS.audioContent.toString('base64') 
+        });
 
-const [responseTTS] = await ttsClient.synthesizeSpeech({
-    input: { text: textoParaVoz },
-    voice: { 
-        languageCode: 'es-ES', 
-        name: 'es-ES-Wavenet-E', 
-        ssmlGender: 'FEMALE' 
-    },
-    audioConfig: { audioEncoding: 'MP3' },
-});
-
-res.status(200).json({ 
-    texto: textoFinal, 
-    audio: responseTTS.audioContent.toString('base64') 
-});
+// ... resto del catch ...
 
 res.status(200).json({ 
     texto: textoFinal, 
