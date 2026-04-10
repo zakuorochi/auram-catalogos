@@ -152,7 +152,8 @@ async function ejecutarIA(ocasion) {
             // --- CONSTRUCCIÓN DE URL (EL PUNTO CRÍTICO) ---
             // Asegúrate en GitHub de que tus fotos estén en /catalogos/hombre/(001).jpg
             // Si están sueltas en /catalogos/ borra '${gen}/'
-            const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
+          // --- RUTA CORREGIDA SEGÚN TU ESTRUCTURA ---
+const urlFoto = `https://raw.githubusercontent.com/zakuorochi/auram-catalogos/main/catalogos/${gen}/(${numFormateado}).jpg`;
             
             console.log("AURAM: Intentando cargar miniatura desde GitHub:", urlFoto);
 
