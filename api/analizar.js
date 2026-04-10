@@ -15,38 +15,34 @@ export default async function handler(req, res) {
         const vertex_ai = new VertexAI({ project, location: 'us-central1', googleAuthOptions: { credentials } });
         const ttsClient = new textToSpeech.TextToSpeechClient({ credentials });
         
-        // --- USANDO ESTRICTAMENTE 2.5-FLASH-LITE ---
         const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-        // 1. Detección de género rápida
+        // 1. Detección de género (Limpieza mejorada)
         const resGen = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: "Responde solo 'hombre' o 'mujer'." }, { inlineData: { mimeType: 'image/jpeg', data: image } }] }]
         });
-        const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().trim();
-        const urlPdf = gen.includes('mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
+        
+        // Limpiamos puntos o espacios extra que la IA pueda enviar
+        const gen = resGen.response.candidates[0].content.parts[0].text.toLowerCase().replace(/[^a-z]/g, "").trim();
+        const urlPdf = (gen === 'mujer') ? 'gs://auram-assets-01/mujer.pdf' : 'gs://auram-assets-01/hombre.pdf';
 
-        // 2. Prompt Optimizado para Estilo y Vínculo de Imagen
-    // ... dentro de api/analizar.js ...
-
-        // 2. PROMPT EMPÁTICO Y SIN PRECIOS
+        // 2. PROMPT EMPÁTICO Y ESTRICTO
         const promptFinal = {
             contents: [{
                 role: 'user',
                 parts: [
-                    { text: `Eres AURAM, una asistente de moda experta, muy empática, dulce y sofisticada. 
-                    Analiza la foto del usuario para esta ocasión: ${ocasion}. 
+                    { text: `Eres AURAM, una asistente de moda de alta gama, dulce y sofisticada. 
+                    TU MISIÓN: Analizar la foto del usuario y recomendar una prenda del catálogo PDF de ${gen.toUpperCase()}.
 
-                    Eres AURAM. Analiza la imagen del catálogo PDF y la foto del usuario. Es obligatorio que la prenda que sugieras esté físicamente en el PDF. No inventes descripciones, usa las del catálogo.
-                    
-                    INSTRUCCIONES DE ESTILO:
-                    - Saluda de forma amable y sugiere un look basado EXACTAMENTE en lo que veas en el catálogo de ${gen.toUpperCase()} (PDF).
-                    - NO menciones precios, NO menciones códigos de producto.
-                    - Tu lenguaje debe ser inspirador (máx. 50 palabras).
-                    
-                    IMPORTANTE (SOLO PARA EL SISTEMA):
-                    Al final de tu respuesta, añade estrictamente esto:
+                    REGLAS OBLIGATORIAS:
+                    - La prenda sugerida debe existir físicamente en el PDF adjunto. No inventes.
+                    - Saluda con calidez y describe el look de forma inspiradora (máx. 50 palabras).
+                    - PROHIBIDO mencionar precios o códigos técnicos en tu recomendación.
+                    - Usa un tono empático y amigable.
+
+                    ESTRUCTURA TÉCNICA FINAL (OBLIGATORIA):
                     GENERO_REF: ${gen}
-                    PAGINA_REF: [número de página donde está la prenda que recomendaste]
+                    PAGINA_REF: [número de página real del PDF]
                     FOTO` },
                     { fileData: { mimeType: 'application/pdf', fileUri: urlPdf } },
                     { inlineData: { mimeType: 'image/jpeg', data: image } }
@@ -57,7 +53,7 @@ export default async function handler(req, res) {
         const result = await model.generateContent(promptFinal);
         const textoIA = result.response.candidates[0].content.parts[0].text;
 
-        // 3. Procesamiento para el Frontend (Sincronizado 1:1)
+        // 3. Procesamiento para el Frontend
         let textoFinal = textoIA;
         const pagMatch = textoIA.match(/PAGINA_REF:\s*(\d+)/i);
         if (pagMatch) {
@@ -65,17 +61,20 @@ export default async function handler(req, res) {
             textoFinal = textoFinal.replace(/PAGINA_REF:\s*\d+/i, `PAGINA_REF: ${numPdf}`);
         }
 
-        // 4. VOZ FEMENINA CORREGIDA (Sin el error de variable)
+        // 4. VOZ FEMENINA (Wavenet-E)
         const textoParaVoz = textoIA.replace(/GENERO_REF:.*|PAGINA_REF:.*|FOTO/gi, "");
         
         const [responseTTS] = await ttsClient.synthesizeSpeech({
             input: { text: textoParaVoz },
             voice: { 
                 languageCode: 'es-ES', 
-                name: 'es-ES-Wavenet-E', // Voz femenina sofisticada
+                name: 'es-ES-Wavenet-E', 
                 ssmlGender: 'FEMALE' 
             },
-            audioConfig: { audioEncoding: 'MP3' },
+            audioConfig: { 
+                audioEncoding: 'MP3',
+                speakingRate: 1.0 // Velocidad natural
+            },
         });
 
         res.status(200).json({ 
@@ -83,15 +82,9 @@ export default async function handler(req, res) {
             audio: responseTTS.audioContent.toString('base64') 
         });
 
-// ... resto del catch ...
-
-res.status(200).json({ 
-    texto: textoFinal, 
-    audio: responseTTS.audioContent.toString('base64') 
-});
-
     } catch (err) {
         console.error("Error en AURAM 2.5 Lite:", err.message);
         res.status(200).json({ isError: true, detalle: err.message });
     }
 }
+// Versión Final 2.5 - Voz Femenina Activada
