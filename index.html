@@ -22,7 +22,7 @@
         .loader { border: 3px solid #111; border-top: 3px solid #00d1ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .btn-reload { margin-top: 25px; background: #fff; color: #000; padding: 15px 40px; border-radius: 30px; font-weight: bold; border: none; cursor: pointer; }
-        #loading-msg { color: #00d1ff; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; }
+        #loading-msg { color: #00d1ff; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; line-height: 1.6; }
     </style>
 </head>
 <body onclick="iniciarApp()">
@@ -66,6 +66,14 @@
         let appIniciada = false;
         let audioActual = null;
 
+        const frasesMotivacionales = [
+            "Tu estilo es la firma de tu personalidad.",
+            "Buscando prendas que eleven tu aura hoy.",
+            "La elegancia es la única belleza que nunca se desvanece.",
+            "Analizando texturas para tu presencia única.",
+            "Tu confianza es tu mejor accesorio."
+        ];
+
         function detenerAudio() { if (audioActual) { audioActual.pause(); audioActual.currentTime = 0; } }
 
         function iniciarApp() {
@@ -84,7 +92,11 @@
 
         async function ejecutarIA(ocasion) {
             cerrarModales();
-            document.getElementById('loading-msg').innerText = "Analizando tu estilo...";
+            
+            // Lógica de Frases Motivacionales
+            const frase = frasesMotivacionales[Math.floor(Math.random() * frasesMotivacionales.length)];
+            document.getElementById('loading-msg').innerHTML = `ANALIZANDO TU ESTILO...<br><br><span style="font-style: italic; opacity: 0.7; text-transform: none; letter-spacing: 1px;">(${frase})</span>`;
+            
             document.getElementById('modal-loading').style.display = 'flex';
             
             const canvas = document.createElement('canvas');
@@ -109,7 +121,6 @@
 
                 let respuestaFinal = data.texto;
 
-                // --- DETECCIÓN DE IMAGEN 1:1 (SIN OFFSET) ---
                 const pagMatch = respuestaFinal.match(/PAGINA_REF:\s*(\d+)/i);
                 const genMatch = respuestaFinal.match(/GENERO_REF:\s*(hombre|mujer)/i);
 
