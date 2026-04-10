@@ -68,9 +68,9 @@ if (pagMatch) {
         const [responseTTS] = await ttsClient.synthesizeSpeech({
             input: { text: textoParaVoz },
             voice: { 
-                languageCode: 'es-ES', 
-                name: 'es-ES-Wavenet-B', 
-                ssmlGender: 'MALE' 
+              languageCode: 'es-ES', 
+        name: 'es-ES-Wavenet-E', 
+        ssmlGender: 'FEMALE'
             },
             audioConfig: { audioEncoding: 'MP3' },
         });
